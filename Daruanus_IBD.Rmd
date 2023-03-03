@@ -1,0 +1,3494 @@
+---
+title:	"Dascyllus	aruanus	IBD	Calculations"
+output:
+		html_document:
+				toc:	yes
+				toc_depth:	'4'
+				df_print:	paged
+		html_notebook:
+				toc:	yes
+				toc_depth:	4
+				toc_float:	yes
+		pdf_document:
+				toc:	yes
+				toc_depth:	'4'
+				latex_engine:	xelatex
+bibliography:	"../IBD_Kernels.bib"
+---
+```{r	setup,	echo=F,	message=F}
+
+library(readxl)
+library(adegenet)
+library(gdistance)
+library(pegas)
+library(hierfstat)
+library(raster)
+library(rgdal)
+library(tidyverse)
+library(graph4lg)
+library(coda)
+library(knitr)
+library(forcats)
+library(strataG)
+library(EnvStats)
+library(genepopedit)
+
+source("../IBD_functions.R")
+#knitr::opts_knit$set(root.dir	=	'./Daruanus')
+
+
+```
+
+
+Cecile	Fauvelot	has	kindly	shared	a	giant	(n=1358)	microsatellite	dataset	for	*Dascyllus	aruanus*,	the	white	tailed	or	humbug	damsel.	We	don't	have	an	empirical	parentage	kernel	for	this	species,	but	she	does	have	samples	from	New	Caledonia	and	Fiji	which	are	two	of	the	archipelagos	in	our	proposal.	She	also	has	them	from	French	Polynesia	and	Papua	New	Guinea.	So	the	goal	here	is	to	do	a	preliminary	analysis	for	the	sake	of	the	proposal.	One	problem	will	be	that	these	are	likely	adults,	not	new	recruits...
+
+![White	Tailed	Damsel](figures/Humbug_dascyllus.jpg)
+
+
+
+![Sample	Sites](figures/Da_samplesites.jpg)
+
+#	Read	and	convert	data
+
+Had	to	do	a	little	conversion	in	bbedit	to	ready	the	Excel	formatted	data	for	input	into	R
+
+##	Read	in	the	data
+
+```{r	readdata,	message	=	F}
+#read	in	the	data
+Daruanus.gen	<-	read.genepop("Daruanus_Fauvelot.gen",	ncode	=	3L)
+#	rename	the	populations	to	just	the	text	values
+Daruanus.gen@pop	<-	Daruanus.gen@pop	%>%	str_extract("[A-Za-z]+")	%>%	as.factor()
+
+#	read	in	the	locality	information
+Daruanus.sites	<-	read_excel("Daruanus_sites.xlsx")
+
+Daruanus.gen@pop	%>%	tibble(pop	=	as.character(.))	%>%	count(pop)
+
+```
+
+##	Test	for	HWE
+
+Test	for	HWE.	First	look	at	the	number	of	populations	that	have	HWE	departures	for	each	locus.	Then	look	at	the	distribution	of	p-values	following	[@waplesTestingHardyWeinberg2014].	A	flat	distribution	is	fine,	but	enrichment	for	low	p-values	suggests	that	the	locus	is	not	globally	at	HWE.
+
+```{r	HWE}
+
+separated_pops	<-	seppop(Daruanus.gen)
+
+#	perform	HWE	test
+hw	<-	map(separated_pops,	hw.test)
+	
+hw2	<-	do.call(rbind,hw)	%>%	as_tibble(rownames	=	"locus")	%>%		group_by(locus)	%>%
+								summarize(outofhwe	=	length(which(Pr.exact	<	0.05)),	
+																		outofhwe_prop	=	length(which(Pr.exact	<	0.05))/length(hw),
+																		meanp	=	mean(Pr.exact))
+
+hw2
+
+
+pvalues<-	do.call(rbind,hw)	%>%	as_tibble(rownames	=	"locus")	%>%		group_by(locus)	%>%	
+										ggplot(aes(x=Pr.exact))	+	geom_histogram(bins=10)	+	facet_wrap(~locus)
+
+pvalues
+
+```
+It's	pretty	clear	we	need	to	zap	loci	408,	494,	and	593.	565	is	a	little	weird,	but	let's	keep	it.
+
+```{r}
+locNames(Daruanus.gen)
+
+Daruanus.gen	<-	Daruanus.gen[loc=-c(2,5,10)]
+
+#convert	to	strataG	gtypes
+Daruanus.gtypes	<-	genind2gtypes(Daruanus.gen)
+
+#genind_to_genepop(Daruanus.gen,	output	=	"Daruanus/Daruanus_All_8locus.txt")
+```
+##	Split	by	Archipelago
+
+```{r}
+#split	them	again
+separated_pops	<-	seppop(Daruanus.gen)
+
+#split	off	the	Fiji	samples
+fijipops	<-	Daruanus.sites	%>%	filter(Region=="Fiji")
+Daruanus.Fiji	<-	repool(separated_pops[fijipops$Abbr])
+
+#split	off	the	NC	samples
+NCpops	<-	Daruanus.sites	%>%	filter(Region=="NC")	%>%	filter(Abbr!="Hie")
+Daruanus.NC	<-	repool(separated_pops[NCpops$Abbr])
+
+#split	off	the	FP	samples
+FPpops	<-	Daruanus.sites	%>%	filter(Region	==	"FP")	%>%	
+		filter(Abbr	%in%	c("Puna","Tetia",	"Tem","Mo","Tahaa"))
+Daruanus.FP	<-	repool(separated_pops[FPpops$Abbr])
+
+
+
+
+#genind_to_genepop(Daruanus.NC,output	=	"Daruanus/NC/Daruanus_NC.txt")
+#genind_to_genepop(Daruanus.Fiji,output	=	"Daruanus/Fiji/Daruanus_Fiji.txt")
+#genind_to_genepop(Daruanus.FP,output	=	"Daruanus/FP/Daruanus_FP.txt")
+```
+
+##	Calculate	Effective	Size
+
+
+	@neelEstimationEffectivePopulation2013	say:
+
+>	Our	results	show	that	the	LD	method	provides	a	good	approximation	of	the	NS	as	long	as	the	scale	of	sampling	is	commensurate	with	the	scale	of	local	breeding.
+
+Treating	the	whole	dataset	as	one	population	yields	$N_e$	of	-27423.9	(in	other	words	too	large)	at	pcrit	of	0.02.	But	the	problem	is	determining	the	size	of	the	genetic	neighborhood,	because	Fauvelot	et	al.'s	samples	were	not	as	regularly	spaced	as	D'Aloia's.	
+
+
+Going	to	use	the	LD	method	as	most	recently	discussed	by	@waplesLinkageDisequilibriumEstimates2010,	and	implemented	in	NeEstimator	v2	[@doNeEstimatorV2Reimplementation2014].	I'm	going	to	remove	alleles	following	Waples	and	Do's	rule	of	thumb.	Parameter	settings	are	in	`"Daruanus/Ne_estimator/"`	Best	to	run	this	from	the	command	line	actually.	I	am	having	it	calculate	$N_b$	(number	of	breeders)	for	monogamy,	as	the	protogynous	mating	system	of	*Dascyllus	aruanus*	seems	closer	to	monogamy	than	random	mating.		Also	had	to	edit	the	table	output	of	NeEstimator	to	make	it	legible	to	R	because	it	had	lots	of	spaces	and	empty	cells	`r	emo::ji("-1")`
+
+```{bash	NeEstimator,	eval	=	F,	message=F}
+/Applications/NeEstimator/Ne2-1M	i:/Users/eric/github/IBD_Kernels/Daruanus/NeEstimator/info	o:/Users/eric/github/IBD_Kernels/Daruanus/NeEstimator/option
+
+INFO
+1			*	A	number	=	sum	of	method(s)	to	run:	LD(=1),	Het(=2),	Coan(=4),	Temporal(=8).
+/Users/eric/github/IBD_Kernels/Daruanus/		*	Input	Directory
+Daruanus_All_8locus.txt	*	Input	file	name
+2				*	1	=	FSTAT	format,	2	=	GENEPOP	format
+/Users/eric/github/IBD_Kernels/Daruanus/NeEstimator/		*	Output	Directory
+Daruanus_LDNe.txt		*	Output	file	name	(put	asterisk	adjacent	to	the	name	to	append)
+6				*	Number	of	critical	values,	added	1	if	a	run	by	rejecting	only	singleton	alleles	is	included
+1	0.01	0.02	0.03	0.04	0.05				*	Critical	values,	a	special	value	'1'	is	for	rejecting	only	singleton	alleles
+1			*	0:	Random	mating,	1:	Monogamy	(LD	method)
+
+
+OPTION
+1		1		5		1		*	First	number	=	sum	of	method(s)	to	have	extra	output:	LD(=1),	Het(=2),	Coan(=4),	Temporal(=8)
+0		*	Maximum	individuals/pop.	If	0:	no	limit
+0		*	First	entry	n1	=	0:	No	Freq	output.	If	n1	=	-1:	Freq.	output	up	to	population	50.	Two	entries	n1,	n2	with	n1	<=	n2:	Freq	output	for	populations	from	n1	to	n2.	Max.	populations	to	have	Freq	output	is	set	at	50
+0		*	For	Burrow	output	file	(up	to	50	populations	can	have	output).	See	remark	below
+1		*	Parameter	CI:	1	for	Yes,	0	for	No
+1		*	Jackknife	CI:	1	for	Yes,	0	for	No
+0		*	Up	to	population,	or	range	of	populations	to	run	(if	2	entries).	If	first	entry	=	0:	no	restriction
+0		*	All	loci	are	accepted
+1		*	Enter	1:	A	file	is	created	to	document	missing	data	if	there	are	any	in	input	file.	Enter	0:	no	file	created
+0			*	Line	for	chromosomes/loci	option	and	file
+
+
+
+```
+
+
+I	implemented	a	filtering	step	that	follows	@waplesLinkageDisequilibriumEstimates2010	:
+
+>	For	S	\>	100:	choose	Pcrit	=	0.01
+>	For	S	\>	25:	choose	Pcrit	=	0.02.\
+>	For	S	\<	25:	choose	so	that	1/(2S)	\<	Pcrit	\<	1/S.
+
+
+And	I	am	only	keeping	estimates	from	samples	with	n	>=	10.
+
+```{R	NeEstimator_output}
+Ne_estimates	<-	read_NeEstimator(file	=	"./NeEstimator/Daruanus_LDNe_xLD.txt")
+
+#	filtering	based	on	rule	of	thumb	from	Waples	&	Do
+Ne_estimates_f	<-	WDFilter(Ne_estimates,	10)	%>%	
+		mutate(Population	=	str_replace(Population,pattern	=	"\\d+\\:(\\w+)_[\\w-]+",	replacement	=	"\\1"	))
+
+```
+
+
+
+###	Interpreting	LD	Effective	Size
+
+These	estimates	are	true	Ne	estimates	because	these	samples	were	taken	across	the	age	structure	of	the	population.	So	there	won't	be	any	conversion	from	Nb	to	Ne.
+
+Cecile	says:
+>	For	Fiji	and	NC,	multiple	individuals	at	a	coral	colony	were	indeed	sampled	as	we	used	clove	oil	around	coral	colonies	covered	by	a	plastic	bag...	so	yes	too,	across	age	structure.	I	do	not	have	the	size	of	individuals	sampled
+
+[@waplesEffectsOverlappingGenerations2014]	says:
+
+>Our	empirical	results	provide	some	qualified	support	for	the	hypothesis	(Waples	and	Do	2010)	that	a	sample	that	includes	as	many	cohorts	as	there	are	in	a	generation	should	produce	an	estimate	approximately	equal	to	Ne....All	estimates	based	on	random	samples	of	adults	were	smaller	than	true	Ne	...,	but	there	was	a	tendency	for	the	bias	to	be	less	when	the	number	of	cohorts	included	in	the	adult	sample	corresponded	more	closely	to	the	generation	length.
+
+*Dascyllus	aruanus*	strikes	me	as	one	of	those	species	where	you'll	have	as	many	cohorts	as	generations,	although	protogyny	kind	of	messes	with	this.	In	any	case,	we	can	expect	our	estimates	of	Ne	(and	thus	De)	to	be	downwardly	biased,	and	therefore	our	estimates	of	$\sigma$	to	be	upwardly	biased,	by	hopefully	less	than	10%?
+
+#	New	Caledonia
+
+##	Traditional	Isolation	by	Distance	Method
+
+Based	on	the	OG	[@roussetGeneticDifferentiationEstimation1997]	estimator	from	slope	of	the	IBD	regression.
+
+###	Calculate	distance	matrices
+
+Weir	and	Cockerham's	Fst	and	other	basic	stats
+
+```{r	FST}
+
+Daruanus.NC.hfst	<-	genind2hierfstat(Daruanus.NC)
+Daruanus.NC.loci	<-	genind2loci(Daruanus.NC)
+#gen.loci	<-	genind2loci(gen)
+stats.NC	<-	basic.stats(Daruanus.NC)
+theta.NC	<-	theta.msat(Daruanus.NC.loci)
+#mean	theta
+mean(theta.NC[,2])
+fst.NC	<-	genet.dist(Daruanus.NC.hfst,	method	=	"WC84")
+#	mean	Fis	values
+stats.NC$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+meanFis	<-	stats.NC$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))	%>%	summarize(meanFis	=	rowMeans(.))
+#	linearize
+fst.NC	<-	fst.NC/(1-fst.NC)
+
+
+#calculate	great	circle	distance
+gcdists_NC	<-	as.dist(pointDistance(NCpops[,5:4],	lonlat=T)/1000)
+attr(gcdists_NC,	"Labels")	<-	NCpops$Abbr
+gcdists.mat_NC	<-	as.matrix(gcdists_NC)
+#write.csv(as.matrix(gen.fst),	"Daruanus_linearizedFst.csv",	row.names	=	F,	quote=F)
+#write.csv(as.matrix(gcdists),	"Daruanus_gcdists.csv",	row.names	=	F,	quote=F)
+
+#pull	out	a	few	other	distances	we'll	need
+neighbordists_NC	<-	gcdists.mat_NC[row(gcdists.mat_NC)	==	col(gcdists.mat_NC)	+	1]
+distfromP1_NC	<-	gcdists.mat_NC[,1]
+maxdist_NC	<-	max(gcdists.mat_NC)
+meandists_NC	<-	mean(neighbordists_NC)
+
+
+```
+
+
+###	Create	Dispersal	Kernel
+
+
+####	Calculate	linear	model
+
+First	to	get	the	slope	$m$	we	need	to	make	a	simple	linear	model.	I	don't	think	significance	is	really	important	here,	but	we	can	calculate	that	with	a	Mantel	test.
+
+```{r	IBD}
+#	mantel	test
+mantelt	<-	mantel.randtest(fst.NC,gcdists_NC,	nrepet	=	10000)
+
+distances	<-	tibble(distance=as.vector(gcdists_NC),fst=as.vector(fst.NC))
+
+lmodel_NC	<-	lm(fst	~	distance	,	distances)
+
+slope_NC	<-	round(lmodel_NC$coefficients[2],7)
+mantelr	<-	round(mantelt$obs,	2)
+pvalue	<-	round(mantelt$pvalue,	5)
+
+lmodel_plot_NC	<-	ggplot(distances,aes(x=distance,y=fst))	+
+																geom_point()	+	geom_smooth(method=lm)	+	xlab("Geographic	Distance	(km)")	+	
+																ylab(expression(F["ST"]/1-F["ST"]))	+	
+																geom_text(label	=	paste("m	=",	slope_NC,	
+																																								";	Mantel	r	=",	mantelr,
+																																								",	p	=",	pvalue	),	
+																										mapping	=	aes(x	=	80,	y	=	-0.002))
+
+lmodel_plot_NC
+
+#ggsave("NC_IBD.pdf",	plot=clown_plot,device="pdf",	width=7,	height=5,units="in")
+
+```
+
+Yowza.	Negative	slope!	As	Cecile	had	already	measured.	But	the	Fst	values	are	really	teeny.
+
+###	Calculate	Effective	Size
+
+Take	the	harmonic	mean	of	the	Ne	across	all	pops
+
+```{r}
+Ne_estimates_NC	<-	Ne_estimates_f	%>%	filter(Population	%in%	NCpops$Abbr)
+
+#write_csv(Nb_estimates_f,"NeEstimator/Nb_estimates_recruits_NeTable.csv")
+Ne_estimates_NC[,c(1:4,8,11,12)]
+
+#	harmonic	mean	of	Nb,	following	Waples	and	Do	2010
+Ne_hm_NC	<-	harm_mean(Ne_estimates_NC$Ne)
+
+```
+
+###	Ne	vs.	Sampling	Window
+
+Let's	cluster	the	sites	by	UPGMA
+```{r}
+plot(hclust(gcdists_NC,"average"))
+```
+
+####	10km
+Let's	explore	Ne	and	Fis	when	lumping	populations...		First	lump	populations	that	are	less	than	10	km	apart
+
+```{r}
+stats.NC$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+Daruanus.NC.10km	<-	Daruanus.NC
+
+Daruanus.NC.10km@pop	<-		Daruanus.NC.10km@pop	%>%	fct_collapse(
+			center	=	c("Go","Lar"),
+	)
+
+Daruanus.NC.10km.stats	<-	basic.stats(Daruanus.NC.10km)
+
+Daruanus.NC.10km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+meanFis_NC_10km	<-	Daruanus.NC.10km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))	%>%	
+		summarize(meanFis	=	rowMeans(.))
+
+#genind_to_genepop(Daruanus.NC.10km,output	=	"Daruanus/NC/Daruanus_NC_10km.txt")
+
+Ne_estimates_NC10km	<-	read_NeEstimator(
+																								"NeEstimator/Daruanus_LDNe_NC_10kmxLD.txt")
+Ne_estimates_NC10km	<-	WDFilter(Ne_estimates_NC10km,	10)
+
+
+Ne_hm_NC10km	<-	harm_mean(Ne_estimates_NC10km$Ne)
+
+```
+
+####	20km	
+
+Now	move	up	to	20	km
+
+```{r}
+Daruanus.NC.20km	<-	Daruanus.NC
+
+Daruanus.NC.20km@pop	<-		Daruanus.NC.20km@pop	%>%	fct_collapse(
+			center	=	c("MBO","Lar","Go","QBW")
+	)
+
+Daruanus.NC.20km.stats	<-	basic.stats(Daruanus.NC.20km)
+
+Daruanus.NC.20km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+meanFis_NC_20km	<-	Daruanus.NC.20km.stats$Fis	%>%	as_tibble()	%>%
+		summarize(across(everything(),mean,	na.rm=TRUE))	%>%	summarize(meanFis	=	rowMeans(.))
+
+#genind_to_genepop(Daruanus.NC.20km,output	=	"NC/Daruanus_NC_20km.txt")
+
+Ne_estimates_NC20km	<-	read_NeEstimator(file	=	"NeEstimator/Daruanus_LDNe_NC_20kmxLD.txt")
+Ne_estimates_NC20km	<-	WDFilter(Ne_estimates_NC20km,	10)
+
+Ne_hm_NC20km	<-	harm_mean(Ne_estimates_NC20km$Ne)
+
+
+
+
+```
+
+####	40km	
+Now	move	up	to	40	km
+```{r}
+Daruanus.NC.40km	<-	Daruanus.NC
+
+Daruanus.NC.40km@pop	<-		Daruanus.NC.40km@pop	%>%	fct_collapse(
+			north	=	c("Mara","Ten"),
+			center	=	c("MBO","Lar","Go","QBW")
+	)
+
+Daruanus.NC.40km.stats	<-	basic.stats(Daruanus.NC.40km)
+
+Daruanus.NC.40km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+meanFis_NC_40km	<-	Daruanus.NC.40km.stats$Fis	%>%	as_tibble()	%>%
+		summarize(across(everything(),mean,	na.rm=TRUE))	%>%	summarize(meanFis	=	rowMeans(.))
+
+#genind_to_genepop(Daruanus.NC.40km,output	=	"NC/Daruanus_NC_40km.txt")
+
+Ne_estimates_NC40km	<-	read_NeEstimator(file	=	"NeEstimator/Daruanus_LDNe_NC_40kmxLD.txt")
+Ne_estimates_NC40km	<-	WDFilter(Ne_estimates_NC40km,	10)
+
+Ne_hm_NC40km	<-	harm_mean(Ne_estimates_NC40km$Ne)
+
+
+
+
+```
+
+####	100km
+
+Now	move	up	to	100	km
+```{r}
+Daruanus.NC.100km	<-	Daruanus.NC
+
+Daruanus.NC.100km@pop	<-		Daruanus.NC.100km@pop	%>%	fct_collapse(
+		north	=	c("Mara"),
+		east	=	c("MBO","Lar","Go","QBW","Tote","Ten")
+	)
+
+Daruanus.NC.100km.stats	<-	basic.stats(Daruanus.NC.100km)
+
+Daruanus.NC.100km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+meanFis_NC_100km	<-	Daruanus.NC.100km.stats$Fis	%>%	as_tibble()	%>%
+		summarize(across(everything(),mean,	na.rm=TRUE))	%>%	summarize(meanFis	=	rowMeans(.))
+
+
+
+#genind_to_genepop(Daruanus.NC.100km,output	=	"NC/Daruanus_NC_100km.txt")
+
+Ne_estimates_NC100km	<-	read_NeEstimator(file	=
+																																													"NeEstimator/Daruanus_LDNe_NC_100kmxLD.txt")
+Ne_estimates_NC100km	<-	WDFilter(Ne_estimates_NC100km,	10)
+
+#replace	one	very	large	estimate	of	Ne	with	20,0000
+Ne_estimates_NC100km$Ne[1]	<-	20000
+
+Ne_hm_NC100km	<-	harm_mean(Ne_estimates_NC100km$Ne)
+
+
+
+
+```
+
+####	200km
+Now	move	up	to	200	km	(all	pops	as	one)
+
+```{r}
+Ne_estimates_NC200km	<-	read_NeEstimator(file	=
+																																													"NeEstimator/Daruanus_LDNe_NC_1popxLD.txt")
+Ne_estimates_NC200km	<-	WDFilter(Ne_estimates_NC200km,	10)
+
+
+
+Ne_hm_NC200km	<-	Ne_estimates_NC200km$Ne
+Ne_all_NC	<-	Ne_estimates_NC200km$Ne
+
+Ne_all_NC_CI	<-	c(Ne_estimates_NC200km$ParametricLow,Ne_estimates_NC200km$ParametricHigh)
+```
+
+####	Figure
+
+```{r}
+NCwindows	<-	tibble(SampleWindow	=	c(0,10,20,40,100,200),
+																						hm_Ne	=	c(Ne_hm_NC,Ne_hm_NC10km,Ne_hm_NC20km,Ne_hm_NC40km,
+																																Ne_hm_NC100km,Ne_hm_NC200km))
+
+ggplot(NCwindows,	aes(x	=	SampleWindow,	y	=	hm_Ne))	+	geom_point()	+	geom_line()	+
+		ylim(0,20000)	+	xlim(0,300)
+#ggsave("NC_Ne_v_SampDistance.pdf",height	=	7,	width	=	7)
+```
+
+
+###	Calculate	Effective	Density
+
+```{r}
+#	Divide	by	mean	distance	between	sampling	sites	to	get	density
+De_NC	<-	Ne_hm_NC/meandists_NC
+De_all_NC	<-	Ne_all_NC	/	maxdist_NC
+```
+
+Mean	density	is	`r	De_NC`	individuals/km,	or	if	we	do	the	whole	sample	as	a	single	population	`r	De_all_NC`	individuals/km
+
+##	MigraiNe	Method
+
+
+###	Running	MigraiNe
+
+I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	last	individual	in	each	population.	These	coordinates	were	distances	in	km	along	a	the	mostly	linear	SW	coastline	of	New	Caledonia,	which	runs	a	total	of	~612km.	It	is	~418km	to	the	first	population	at	Mara,	so	I	am	adding	that	value	to	the	coordinates	in	the	file.
+
+```{r}
+distfromP1_NC+418
+```
+
+####	First	Run
+
+```{bash	eval	=	F}
+
+GenepopFileName=../Daruanus_NC.txt
+DemographicModel=LinearIBD
+#	I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#	last	individual	in	each	population.	These	coordinates	were	distances	in	km	along	
+#	a	the	mostly	linear	SW	coastline	of	New	Caledonia,	
+#	which	runs	a	total	of	~612km.	It	is	~418km	to	the	first	population	at	Mara,	
+#	so	I	am	adding	that	value	to	the	coordinates	in	the	file.
+PSONMax=612	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	25.08
+#612/25.08	=	24.40	so	I	will	use	25	bins
+GeoBinNbr=25
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs.	GivenK	is	number	of	alleles
+#	at	each	locus
+MutationModel=PIM
+GivenK=26,35,11,57,47,32,30,23,57,34,44
+samplingSpace=,,
+samplingScale=,,
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	g
+LowerBound=0.1,1,0
+Upperbound=1,2500,1
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2
+CoreNbrForR=4
+#Plots=	all1DProfiles
+1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+#writeAdHocFiles=T
+```
+
+
+And	wow,	that	first	run	completed	in	219	minutes	with	a	reasonable	result,	so	I	think	I'm	just	going	to	use	it	for	now.	It	didn't	calculate	or	plot	condS2	though...
+
+####	Second	Run
+
+```{bash	eval	=	F}
+GenepopFileName=../Daruanus_NC.txt
+DemographicModel=LinearIBD
+#	I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#	last	individual	in	each	population.	These	coordinates	were	distances	in	km	along	
+#	a	the	mostly	linear	SW	coastline	of	New	Caledonia,	
+#	which	runs	a	total	of	~612km.	It	is	~418km	to	the	first	population	at	Mara,	
+#	so	I	am	adding	that	value	to	the	coordinates	in	the	file.
+PSONMin=0	0
+PSONMax=612	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	25.08
+#612/25.08	=	24.40	so	I	will	use	26	bins
+GeoBinNbr=26
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs
+MutationModel=PIM
+GivenK=26,35,11,57,47,32,30,23,57,34,44
+samplingSpace=,,
+samplingScale=,,
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	g
+LowerBound=0.1,1,0
+Upperbound=2,10000,1
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2
+CoreNbrForR=4
+#Plots=	all1DProfiles
+1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+#writeAdHocFiles=T
+```
+
+This	finished	in	250	minutes,	and	had	very	similar	results	to	the	first	run
+
+####	Third	Run
+
+After	removing	3	loci
+
+```{bash	eval	=	F}
+GenepopFileName=../../Daruanus_NC.txt
+DemographicModel=LinearIBD
+#	I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#	last	individual	in	each	population.	These	coordinates	were	distances	in	km	along	
+#	a	the	mostly	linear	SW	coastline	of	New	Caledonia,	
+#	which	runs	a	total	of	~612km.	It	is	~418km	to	the	first	population	at	Mara,	
+#	so	I	am	adding	that	value	to	the	coordinates	in	the	file.
+PSONMin=0	0
+PSONMax=612	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	25.08
+#612/25.08	=	24.40	so	I	will	use	25	bins
+GeoBinNbr=25
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs
+MutationModel=PIM
+GivenK=26,11,57,32,30,23,57,44
+samplingSpace=,,
+samplingScale=,,
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	g
+LowerBound=0.1,1,0
+Upperbound=2,10000,1
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2
+CoreNbrForR=4
+Plots=	all1DProfiles
+#1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+#writeAdHocFiles=T
+```
+
+####	Fourth	Run
+
+And,	lo,	I	forgot	to	use	the	condS2	parameterization	that	is	recommended	for	weak	IBD	signals	by	@lebloisMigraiNeManual2020!	
+
+```{bash	eval	=	F}
+GenepopFileName=../../Daruanus_NC.txt
+DemographicModel=LinearIBD
+#	I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#	last	individual	in	each	population.	These	coordinates	were	distances	in	km	along	
+#	a	the	mostly	linear	SW	coastline	of	New	Caledonia,	
+#	which	runs	a	total	of	~612km.	It	is	~418km	to	the	first	population	at	Mara,	
+#	so	I	am	adding	that	value	to	the	coordinates	in	the	file.
+PSONMin=0	0
+PSONMax=612	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	25.08
+#612/25.08	=	24.40	so	I	will	use	25	bins
+GeoBinNbr=25
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs
+MutationModel=PIM
+GivenK=26,11,57,32,30,23,57,44
+#sampling	-	this	performs	uniform	sampling	of	ln(sigma^2),	which	is	the	quantity	we	are	interested	in
+samplingSpace=,,condS2
+samplingScale=,,logscale
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	g
+LowerBound=0.1,1,1
+Upperbound=2,10000,100000
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2
+CoreNbrForR=4
+Plots=	all1DProfiles
+#1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+#writeAdHocFiles=T
+
+```
+
+Finishing	in	`r	10296/60`	minutes
+
+####	Seventh	Run
+
+Brought	in	the	priors	a	little.	Didn't	change	the	results	much.
+
+```{bash	eval=F}
+GenepopFileName=../../Daruanus_NC.txt
+DemographicModel=LinearIBD
+#	I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#	last	individual	in	each	population.	These	coordinates	were	distances	in	km	along	
+#	a	the	mostly	linear	SW	coastline	of	New	Caledonia,	
+#	which	runs	a	total	of	~612km.	It	is	~418km	to	the	first	population	at	Mara,	
+#	so	I	am	adding	that	value	to	the	coordinates	in	the	file.
+PSONMin=0	0
+PSONMax=612	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	25.08
+#612/25.08	=	24.40	so	I	will	use	26	bins
+GeoBinNbr=26
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs
+MutationModel=PIM
+GivenK=26,11,57,32,30,23,57,44
+#sampling	-	this	performs	uniform	sampling	of	ln(sigma^2)
+samplingSpace=,,condS2
+samplingScale=,,logscale
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	conds2
+LowerBound=0.1,1,1
+Upperbound=2,6000,10000
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2,	g
+#oneDimCI=	All
+CoreNbrForR=4
+Plots=	all1DProfiles
+#1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+writeAdHocFiles=T
+```
+Finished	in	`r	11253/60`	minutes.
+
+###	Create	Dispersal	Kernels
+
+####	Sigma	estimates
+
+So	we	have	two	routes	to	estimate	$\sigma$	here.	
+
+####	From	Neighborhood	Size
+
+$$
+\sigma	=	\sqrt\frac{NS}{4D_e}
+$$
+
+Using	the	estimate	of	neighborhood	size	and	the	above	derived	estimate	of	$D_e$,	$\sigma$	is	`r	signif(sigma_fromNS_NC,3)`km.	
+
+####	From	Sigma^2
+After	converting	it	from	lattice	units	to	km
+
+$$
+\sigma	=	\sqrt{\sigma^2}
+$$
+
+
+This	got	me	the	following	estimates.
+
+Output	from	run	7.
+
+```{r	migraine_parameters_run2}
+runDir	<-	"/Users/eric/github/IBD_Kernels/Daruanus/NC/Migraine/run7"
+#runDir	<-	"/Users/edc5240/github/IBD_Kernels/Daruanus/NC/Migraine/run7"
+result	<-	read_migraine(runDir)
+NS_NC	<-	result["NS"]
+NSCI_NC	<-	c(result["NSCI1"],result["NSCI2"])
+Nmu_NC	<-	result["Nmu"]
+Nm_NC	<-	result["Nm"]
+g_NC	<-	result["g"]
+lattice2geog_NC	<-	result["lattice2geog"]
+
+sigma2_NC	<-	g_to_sigma2(g_NC)
+sigma_fromsigma2_NC	<-	sqrt(sigma2_NC*lattice2geog_NC)
+sigma_fromNS_NC	<-	sqrt(NS_NC/(4*De_NC))
+sigmaCI_fromNS_NC	<-	sqrt(NSCI_NC/(4*De_NC))
+
+sigma_fromNS_all_NC	<-	sqrt(NS_NC/(4*De_all_NC))
+sigmaCI_fromNS_all_NC	<-	sqrt(NSCI_NC/(4*De_all_NC))
+
+```
+
+The	$\sigma$	we	get		from	Neighborhood	Size	$\sigma$	is	`r	sigma_fromNS_NC`.	We	get	a	much	lower	estimate	from	$\sigma^2$,	with	$\sigma$	=	`r	sigma_fromsigma2_NC`
+
+###	Confidence	Intervals
+
+Propagating	error	sorta	following	Pinsky	et	al.	table	S2
+
+####	Error	in	Effective	Size
+
+Following	@pinskyUsingIsolationDistance2010	I	am	going	to	bootstrap	across	the	confidence	intervals	for	each	Nb	estimate.	Unfortunately,	the	new	jackknife	method	of	@jonesImprovedConfidenceIntervals2016	often	results	in	infinite	upper	bounds	with	marine	data	(but	then,	so	does	the	parametric	method).	I'm	also	going	to	use	a	uniform	distribution	for	the	error	because	approximating	the	error	structure	with	ChiSq	or	Normal	distributions	is	not	a	simple	task	and	I'm	just	trying	to	get	a	sketch	of	the	error	to	compare	with	MigraiNe	anyway.	I'm	going	to	set	"Infinite"	values	in	the	upper	CI	to	20,000	since	I	rarely	see	upper	bounds	that	high.
+
+#####	For	Harmonic	Mean	Method
+
+```{r	Nb_CI}
+Ne_estimates_NC$JackknifeHigh[which(is.na(Ne_estimates_NC$JackknifeHigh))]	<-	20000
+Ne_estimates_NC$JackknifeHigh	<-	as.numeric(Ne_estimates_NC$JackknifeHigh)
+Ne_estimates_NC$JackknifeLow	<-	as.numeric(Ne_estimates_NC$JackknifeLow)
+
+#	couldn't	get	purrr:map	to	do	this,	so	resorted	to	mapply	to	set	upper	and	lower	bounds
+Ne_error_NC	<-	NULL
+for(n	in	1:100000){
+		hm	<-	harm_mean(mapply(runif,	n=1,	
+																			min=Ne_estimates_NC$JackknifeLow,
+																			max=Ne_estimates_NC$JackknifeHigh))
+		Ne_error_NC	<-	c(Ne_error_NC,hm)
+}
+names(Ne_error_NC)<-NULL
+
+ggplot(data	=	tibble(Ne_error_NC),	aes(x=Ne_error_NC))	+	geom_density()
+```
+#####	For	Whole	Sample	Method
+
+Naaykens	and	D'Aloia	showed	that	using	the	whole	sample	to	estimate	density	gives	pretty	similar	results	to	the	harmonic	mean	method,	so	I'm	also	going	to	try	that.	
+
+```{r}
+Nbl95	<-	Ne_all_NC_CI[1]
+Nbu95	<-	Ne_all_NC_CI[2]
+Nb	<-	Ne_all_NC
+r2_NC	<-	Ne_estimates_NC200km$r2
+er2_NC	<-	1/Ne_estimates_NC200km$SampSize	+	3.19/Ne_estimates_NC200km$SampSize	^2	#from	Waples	2006	table	2
+df_NC	<-	Ne_estimates_NC200km$IndAlleles
+#effDF	is	the	degrees	of	freedom	to	get	the	jackknife	CI!
+#	This	method	of	finding	DF	makes	no	sense.	Not	sure	how	Malin	got	this	to	work
+#	a2	=	100000
+#	a1	=	100
+#	while(abs(mean(as.numeric(a1))-a2)	>	1){	
+#			if(mean(as.numeric(a1))	>	a2)	a2	=	a2	-	1
+#			if(mean(as.numeric(a1))	<	a2)	a2	=	a2	+	1
+#			a1	=	c(Nbl95,	Nbu95)*qchisq(c(0.975,	0.025),	df=a2)/Nb
+#	}
+#	a2	#df
+
+WaplesMonoNe(r2p(r2_NC,er2_NC))
+
+#	this	shows	that	we	can	get	approximately	what	NeEstimator	gives	us...	not	sure	why	its	not	exact...	must	be	missing	some	correction
+rCI_NC	<-	df_NC*r2_NC	/	(qchisq(c(0.025,0.975),	df	=	df_NC))
+WaplesMonoNe(rCI_NC	-	er2_NC)
+
+#and	now	to	get	and	plot	the	error	distribution
+Ne_error_all_NC	<-	WaplesMonoNe(((df_NC*r2_NC)/(rchisq(10000,	df	=	df_NC)))	-	er2_NC)
+
+ggplot(data	=	tibble(Ne_error_all_NC),	aes(x=Ne_error_all_NC))	+	geom_density()	+	xlim(0,20000)
+																																
+```
+
+####	Error	in	Effective	Density
+
+One	issue	with	this	analysis	is	that,	while	@neelEstimationEffectivePopulation2013	make	a	good	case	that	we	are	estimating	the	Ne	of	the	local	neighborhood,	we	don't	actually	know	what	the	size	of	the	neighborhood	is.	Indeed,	that's	actually	what	we	are	trying	to	estimate.	[@pinskyUsingIsolationDistance2010]	used	neighborhoods	that	were	1/2	the	distance	to	the	next	neighborhood	on	either	side	of	the	sampling	site,	while	[@pinskyMarineDispersalScales2017]	didn't	even	attempt	this	and	just	used	the	Ne	of	the	whole	sampled	population,	and	divided	by	the	length	of	the	whole	sampled	area.
+
+This	is	another	area	of	uncertainty,	so	we	should	model	the	uncertainty	in	neighborhood	length.	We	know	its	between	10	and	40	km	based	on	the	Ne	vs.	Sampling	Window	analysis	above...
+
+```{r}
+
+De_error_NC	<-	Ne_error_NC/	rnorm(100000,mean=meandists_NC,sd	=	15/1.96)
+
+De_error_all_NC	<-	Ne_error_all_NC	/	maxdist_NC
+
+ggplot(data	=	tibble(De_error_all_NC),	aes(x=De_error_all_NC))	+	geom_density()	+	xlim(0,250)
+
+ggplot(data	=	tibble(De_error_NC),	aes(x=De_error_NC))	+	geom_density()	+	xlim(0,250)
+
+
+```
+
+####	Error	in	Neighborhood	Size
+
+Using	a	uniform	distribution	is	out	because	there	is	clearly	a	peaked	distribution	in	the	Migraine	output.	So	I	am	using	a	quick	fit	to	a	truncated	lognormal	distribution.
+
+![Migraine_Run2_Neighborhood_Theta](figures/Da_NC_Neighborhood.jpg)
+
+```{r	New	Neighborhood	Size	Error	}
+NSCI_NC
+curve(dlnorm(x,	meanlog	=	log(NS_NC),	sdlog	=	log(2.75e5)))
+qlnorm(c(0.025,0.975),meanlog	=	log(NS_NC),	sdlog	=	log(2.75e5))
+```
+
+
+```{r}
+
+Neighborhood_error_NC	<-	rlnormTrunc(n	=	100000,	meanlog	=	log(NS_NC),	
+																																					sdlog	=	log(2.75e5),	min	=	NSCI_NC[1],	max	=	NSCI_NC[2])
+
+ggplot(data	=	tibble(Neighborhood_error_NC),	aes(x=Neighborhood_error_NC))	+	
+		geom_density()	+	scale_x_log10()
+
+sigma_error_fromNS_NC	<-	sqrt(Neighborhood_error_NC/(4*De_error_NC))
+names(sigma_error_fromNS_NC)	<-	NULL
+
+sigma_error_fromNS_all_NC	<-	sqrt(Neighborhood_error_NC/(4*De_error_all_NC))
+names(sigma_error_fromNS_all_NC)	<-	NULL
+
+ggplot(data	=	tibble(sigma_error_fromNS_NC),	
+							aes(x=sigma_error_fromNS_NC))	+
+		geom_density()	+	scale_x_log10()
+
+ggplot(data	=	tibble(sigma_error_fromNS_all_NC),	
+							aes(x=sigma_error_fromNS_all_NC))	+
+		geom_density()	+	scale_x_log10()
+
+quantile(sigma_error_fromNS_NC,	c(0.025,	0.975))
+
+```
+
+####	Plot	Dispersal	Kernels	
+
+
+```{r}
+
+kernelplot_NC	<-	ggplot(data.frame(x=c(0,500)),aes(x))	+	
+		map(.x	=	sample(sigma_error_fromNS_NC,1000),	.f	=	function(sigma){
+																														stat_function(fun	=	dexp,	
+																																												args	=	list(rate	=	1/sigma),
+																																												colour	=	"lightblue",
+																																												linetype=1,size=0.1,alpha	=	0.2)	})	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromsigma2_NC),	linetype=2,
+																														aes(color="Migraine_Sigma2"),	show.legend	=	T)	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_NC),	linetype=2,
+																														aes(color="Migraine_Neighborhood_Size"),	show.legend	=	T)	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_all_NC),	linetype=2,
+																														aes(color="Migraine_Neighborhood_Size_OnePop"),	show.legend	=	T)	+
+		xlab("Alongshore	Distance	(km)")	+	ylab("Dispersal	probability	density")	+
+		scale_color_manual("Kernel",values	=	
+																				c(Migraine_Sigma2="darkblue",	
+																				Migraine_Neighborhood_Size	="blue",
+																				Migraine_Neighborhood_Size_OnePop	=	"darkcyan"))	+
+		ylim(0,0.01)	
+
+
+kernelplot_NC
+```
+
+#	Fiji
+
+##	Traditional	Isolation	by	Distance	Method
+
+Based	on	the	OG	[@roussetGeneticDifferentiationEstimation1997]	estimator	from	slope	of	the	IBD	regression.
+
+###	Calculate	distance	matrices
+
+Weir	and	Cockerham's	Fst	and	other	basic	stats.		
+
+```{r	FST_Fiji}
+
+Daruanus.Fiji.hfst	<-	genind2hierfstat(Daruanus.Fiji)
+Daruanus.Fiji.loci	<-	genind2loci(Daruanus.Fiji)
+#gen.loci	<-	genind2loci(gen)
+stats.Fiji	<-	basic.stats(Daruanus.Fiji)
+theta.Fiji	<-	theta.msat(Daruanus.Fiji.loci)
+#mean	theta
+mean(theta.Fiji[,2])
+fst.Fiji	<-	genet.dist(Daruanus.Fiji.hfst,	method	=	"WC84")
+#	mean	Fis	values
+stats.Fiji$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+#	linearize
+fst.Fiji	<-	fst.Fiji/(1-fst.Fiji)
+```
+
+#####	Geographic	Distances
+Also,	given	the	circular	nature	of	Viti	Levu,	the	Euclidean	distances	measured	with	`pointDistance()`	are	going	to	be	short.	So	I	measured	distances	between	each	neighboring	locality	along	the	reef	in	Google	Earth,	as	given	in	`fijidistances`
+
+This	code	creates	a	kml	file	for	import	into	Google	Earth.	
+
+```{r,	eval	=	T}
+fijipops.sp<-fijipops[c(1,2,3,5,4)]
+coordinates(fijipops.sp)	<-	c("decimalLongitude","decimalLatitude")
+proj4string(fijipops.sp)	<-	CRS("+proj=longlat	+datum=WGS84")
+#writeOGR(fijipops.sp,	dsn="Fiji/fijipops.kml",	layer	=	"Daruanus	samples",	driver	=	"KML")
+```
+
+I	used	these	points	to	measure	distances	in	Google	Earth.	The	total	sampled	length	from	Ovalu	in	the	east	to	the	Yasawas	in	the	northwest	was	a	total	of	~414km.
+
+```{r}
+#calculate	great	circle	distance
+gcdists_Fiji	<-	as.dist(pointDistance(fijipops.sp,	lonlat=T)/1000)
+attr(gcdists_Fiji,	"Labels")	<-	fijipops$Abbr
+gcdists.mat_Fiji	<-	as.matrix(gcdists_Fiji)
+#write.csv(as.matrix(gen.fst_Fiji),	"Daruanus_linearizedFst.csv",	row.names	=	F,	quote=F)
+#write.csv(as.matrix(gcdists_Fiji),	"Daruanus_gcdists.csv",	row.names	=	F,	quote=F)
+
+#pull	out	a	few	other	distances	we'll	need
+neighbordists_Fiji	<-	gcdists.mat_Fiji[row(gcdists.mat_Fiji)	==	col(gcdists.mat_Fiji)	+	1]
+#distfromP1	<-	gcdists.mat[,1]
+
+#meandists	<-	mean(neighbordists)
+fijidistances	<-	c((106.03-98.16),	(155.22-106.03),	(188.58-155.22),	(273.50-188.58),
+																			(370-273.50),	(378.13-370.0))
+
+meandists_Fiji	<-	mean(fijidistances)
+maxdist_Fiji	<-	378.13-98.16
+
+fijidistances
+
+
+```
+
+This	gives	us	a	mean	sampling	distance	of	`r	meandists_Fiji`
+
+
+###	Create	Dispersal	Kernel
+
+
+####	Calculate	linear	model
+
+
+```{r	IBD_NC}
+#	mantel	test
+mantelt<-mantel.randtest(fst.Fiji,gcdists_Fiji,	nrepet	=	10000)
+
+distances	<-	tibble(distance=as.vector(gcdists_Fiji),fst=as.vector(fst.Fiji))
+
+lmodel_Fiji	<-	lm(fst	~	distance	,	distances)
+
+slope_Fiji	<-	lmodel_Fiji$coefficients[2]
+mantelr	<-	round(mantelt$obs,	2)
+pvalue	<-	round(mantelt$pvalue,	5)
+
+lmodel_plot_Fiji	<-	ggplot(distances,aes(x=distance,y=fst))	+
+																geom_point()	+	geom_smooth(method=lm)	+	xlab("Geographic	Distance	(km)")	+	
+																ylab(expression(F["ST"]/1-F["ST"]))	+	
+																geom_text(label	=	paste("m	=",	round(slope_Fiji,8),	
+																																								";	Mantel	r	=",	mantelr,
+																																								",	p	=",	pvalue	),	
+																										mapping	=	aes(x	=	80,	y	=	-0.002))
+
+lmodel_plot_Fiji
+
+
+
+#ggsave("Fiji_IBD.pdf",	plot=lmodel_plot,device="pdf",	width=7,	height=5,units="in")
+
+```
+
+And	after	removing	the	3	wonky	loci,	the	slope	is	very	slightly	positive!
+
+###	Calculate	Effective	Size
+
+Pull	out	just	the	relevant	Fiji	estimates	of	Ne.	The	negative	numbers	reflect	very	high	values	of	Ne!
+
+```{r}
+
+Ne_estimates_Fiji	<-	Ne_estimates_f	%>%	filter(Population	%in%	fijipops$Abbr)
+
+#
+Ne_estimates_Fiji[,c(1:4,8,11,12)]
+
+
+
+#	harmonic	mean	of	Ne,	following	Waples	and	Do	2010
+Ne_hm_Fiji	<-	harm_mean(Ne_estimates_Fiji$Ne)
+```
+
+
+###	Ne	vs.	Sampling	Window
+
+Let's	cluster	the	sites	by	UPGMA	(using	Euclidean	distances)
+```{r}
+plot(hclust(gcdists_Fiji,"average"))
+```
+
+####	10km
+Let's	explore	Ne	and	Fis	when	lumping	populations...		First	lump	populations	that	are	less	than	10	km	apart
+
+```{r}
+stats.Fiji$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+Daruanus.Fiji.10km	<-	Daruanus.Fiji
+
+Daruanus.Fiji.10km@pop	<-		Daruanus.Fiji.10km@pop	%>%	fct_collapse(
+			east	=	c("Suva","Muaiv"),
+			west	=	c("Mata","Tave")
+	)
+
+Daruanus.Fiji.10km.stats	<-	basic.stats(Daruanus.Fiji.10km)
+
+Daruanus.Fiji.10km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+#genind_to_genepop(Daruanus.Fiji.10km,output	=	"Daruanus/Fiji/Daruanus_Fiji_10km.txt")
+
+Ne_estimates_Fiji10km	<-	read_NeEstimator(
+																								"NeEstimator/Daruanus_LDNe_Fiji_10kmxLD.txt")
+Ne_estimates_Fiji10km	<-	WDFilter(Ne_estimates_Fiji10km,	10)
+
+
+Ne_hm_Fiji10km	<-	harm_mean(Ne_estimates_Fiji10km$Ne)
+
+```
+
+####	40km	
+Now	move	up	to	40	km
+```{r}
+Daruanus.Fiji.40km	<-	Daruanus.Fiji
+
+Daruanus.Fiji.40km@pop	<-		Daruanus.Fiji.10km@pop	%>%	fct_collapse(
+			east	=	c("Suva","Muaiv"),
+			center	=	c("Yanu","Taga"),
+			west	=	c("Mata","Tave")
+	)
+
+Daruanus.Fiji.40km.stats	<-	basic.stats(Daruanus.Fiji.40km)
+
+Daruanus.Fiji.40km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+#genind_to_genepop(Daruanus.Fiji.40km,output	=	"Daruanus/Fiji/Daruanus_Fiji_40km.txt")
+
+Ne_estimates_Fiji40km	<-	read_NeEstimator(file	=	"NeEstimator/Daruanus_LDNe_Fiji_40kmxLD.txt")
+Ne_estimates_Fiji40km	<-	WDFilter(Ne_estimates_Fiji40km,	10)
+
+Ne_hm_Fiji40km	<-	harm_mean(Ne_estimates_Fiji40km$Ne)
+
+
+
+
+```
+
+####	100km
+
+Now	move	up	to	100	km
+```{r}
+Daruanus.Fiji.100km	<-	Daruanus.Fiji
+
+Daruanus.Fiji.100km@pop	<-		Daruanus.Fiji.100km@pop	%>%	fct_collapse(
+			east	=	c("Suva","Muaiv","Yanu","Taga"),
+			west	=	c("Mata","Tave","Nadi")
+	)
+
+Daruanus.Fiji.100km.stats	<-	basic.stats(Daruanus.Fiji.100km)
+
+Daruanus.Fiji.100km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+#genind_to_genepop(Daruanus.Fiji.100km,output	=	"Fiji/Daruanus_Fiji_100km.txt")
+
+Ne_estimates_Fiji100km	<-	read_NeEstimator(file	=
+																																													"NeEstimator/Daruanus_LDNe_Fiji_100kmxLD.txt")
+Ne_estimates_Fiji100km	<-	WDFilter(Ne_estimates_Fiji100km,	10)
+
+Ne_hm_Fiji100km	<-	harm_mean(Ne_estimates_Fiji100km$Ne)
+
+
+
+
+```
+
+
+####	300km
+300km	(all	pops	as	one)
+
+```{r}
+Ne_estimates_Fiji300km	<-	read_NeEstimator(file	=
+																																													"NeEstimator/Daruanus_LDNe_Fiji_1popxLD.txt")
+Ne_estimates_Fiji300km	<-	WDFilter(Ne_estimates_Fiji300km,	10)
+
+
+
+Ne_hm_Fiji300km	<-	20000
+Ne_all_Fiji	<-	Ne_estimates_Fiji300km$Ne
+
+Ne_all_Fiji_CI	<-	c(Ne_estimates_Fiji300km$ParametricLow,Ne_estimates_Fiji300km$ParametricHigh)
+```
+
+####	Figure
+
+```{r}
+fijiwindows	<-	tibble(SampleWindow	=	c(0,10,40,100,300),
+																						hm_Ne	=	c(Ne_hm_Fiji,Ne_hm_Fiji10km,Ne_hm_Fiji40km,Ne_hm_Fiji100km,
+																																Ne_hm_Fiji300km))
+
+ggplot(fijiwindows,	aes(x	=	SampleWindow,	y	=	hm_Ne))	+	geom_point()	+	
+		geom_line()	+	ylim(0,20000)	+	xlim(0,300)
+ggsave("Fiji_Ne_v_SampDistance.pdf",height	=	7,	width	=	7)
+```
+###	Calculate	Effective	Density
+
+```{r}
+#	Divide	by	mean	distance	between	sampling	sites	to	get	density
+De_Fiji	<-	Ne_hm_Fiji/meandists_Fiji
+#De_all_Fiji	<-	Ne_all_Fiji	/	maxdist_Fiji
+```
+
+Mean	density	is	`r	De_Fiji`	individuals/km.	If	we	do	the	whole	sample	as	a	single	population,	Ne	is	"infinite"	so	this	isn't	useful.
+	
+###	Calculate	sigma
+
+Following	Rousset's	[-@roussetGeneticDifferentiationEstimation1997]	equation:
+
+$$
+\frac{1}{m}	=	4D_e\sigma^2
+$$
+
+Which	[@pinskyMarineDispersalScales2017]	re-arranged	to	give:
+
+$$
+\sigma	=	\sqrt{\frac{1}{4D_em}}
+$$
+
+So	now	let's	plug	that	into	the	first	equation!
+
+```{r	sigmafromSlope_Fiji}
+
+sigma_fromSlope_Fiji	<-	sqrt(1	/	(4*De_Fiji*slope_Fiji))
+
+#sigma_fromSlope_all_Fiji	<-	sqrt(1	/	(4*De_all_Fiji*slope_Fiji))
+
+```
+
+	$\sigma$	estimated	from	this	slope	is	`r	signif(sigma_fromSlope_Fiji,4)`	km	if	I	use	the	harmonic	mean	Ne	for	density.	I	can't	use	the	Ne	from	the	whole	population	because	it	is	infinite.
+
+
+
+##	MigraiNe	Method
+
+
+###	Running	MigraiNe
+
+####	First	Run
+
+```{bash	eval	=	F}
+
+GenepopFileName=../Daruanus_Fiji.txt
+DemographicModel=	LinearIBD
+#I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#last	individual	in	each	population.	These	coordinates	were	distances	in	km	
+#along	the	Viti	Levu	reef	and	coastline	from	Ovalu	in	the	east	to	the	Yasawas	
+#in	the	northwest:	a	total	of	~414km.	I	measured	all	distances	in	Google	Earth
+PSONMax=414	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	46.66
+#414/46.66	=	8.87	so	I	will	use	10	bins
+GeoBinNbr=10
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs.	GivenK	is	number	of	alleles
+#	at	each	locus	(Daruanus.Fiji@loc.n.all)
+MutationModel=PIM
+GivenK=22,27,8,46,47,30,24,20,52,31,38
+samplingSpace=,,
+samplingScale=,,
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	g
+LowerBound=0.1,1,0
+Upperbound=1,2500,1
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2
+CoreNbrForR=4
+#Plots=	all1DProfiles
+1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+#writeAdHocFiles=T
+```
+
+
+This	run	completed	in	147	minutes
+
+####	Second	Run
+
+A	second	run	where	I	widen	the	prior	on	theta	and	Nm.
+
+```{bash	eval	=	F}
+
+GenepopFileName=../Daruanus_Fiji.txt
+DemographicModel=LinearIBD
+#I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#last	individual	in	each	population.	These	coordinates	were	distances	in	km	
+#along	the	Viti	Levu	reef	and	coastline	from	Ovalu	in	the	east	to	the	Yasawas	
+#in	the	northwest:	a	total	of	~414km.	I	measured	all	distances	in	Google	Earth
+PSONMax=414	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	46.66
+#414/46.66	=	8.87	so	I	will	use	10	bins
+GeoBinNbr=10
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs.	GivenK	is	number	of	alleles
+#	at	each	locus	(Daruanus.Fiji@loc.n.all)
+MutationModel=PIM
+GivenK=22,27,8,46,47,30,24,20,52,31,38
+samplingSpace=,,
+samplingScale=,,
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	g
+LowerBound=0.1,1,0
+Upperbound=1,2500,1
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2
+CoreNbrForR=4
+#Plots=	all1DProfiles
+1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+#writeAdHocFiles=T
+```
+
+This	result	finished	in	the	same	amount	of	time	and	with	very	similar	results	to	the	first!
+
+####	Third	Run
+
+Removing	3	loci	and	using	the	condS2	search	parameterization
+
+```{bash	eval=F}
+GenepopFileName=../../Daruanus_Fiji.txt
+DemographicModel=LinearIBD
+#I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#last	individual	in	each	population.	These	coordinates	were	distances	in	km	
+#along	the	Viti	Levu	reef	and	coastline	from	Ovalu	in	the	east	to	the	Yasawas	
+#in	the	northwest:	a	total	of	~414km.	I	measured	all	distances	in	Google	Earth
+PSONMax=414	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	46.66
+#414/46.66	=	8.87	so	I	will	use	10	bins
+GeoBinNbr=10
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs.	GivenK	is	number	of	alleles
+#	at	each	locus	(Daruanus.Fiji@loc.n.all)
+MutationModel=PIM
+GivenK=22,8,46,30,24,20,52,38
+samplingSpace=,,condS2
+samplingScale=,,logscale
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	g
+LowerBound=0.1,1,1
+Upperbound=2,10000,100000
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2
+CoreNbrForR=4
+#Plots=	all1DProfiles
+1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+writeAdHocFiles=T
+```
+
+Finished	in	`r		6776/60`	minutes.
+
+###	Create	Dispersal	Kernels
+
+This	got	me	the	following	estimates.	
+
+Output	from	run	2.
+
+```{r	migraine_parameters_Fiji}
+
+runDir	<-	"/Users/eric/github/IBD_Kernels/Daruanus/Fiji/Migraine/run3"
+result	<-	read_migraine(runDir)
+		
+NS_Fiji	<-	result["NS"]
+NSCI_Fiji	<-	c(result["NSCI1"],result["NSCI2"])
+Nmu_Fiji	<-	result["Nmu"]
+Nm_Fiji	<-	result["Nm"]
+g_Fiji	<-	result["g"]
+lattice2geog_Fiji	<-	result["lattice2geog"]
+
+sigma2_Fiji	<-	g_to_sigma2(g_Fiji)
+sigma_fromsigma2_Fiji	<-	sqrt(sigma2_Fiji*lattice2geog_Fiji)
+sigma_fromNS_Fiji	<-	sqrt(NS_Fiji/(4*De_Fiji))
+sigmaCI_fromNS_Fiji	<-	sqrt(NSCI_Fiji/(4*De_Fiji))
+
+
+```
+
+The	$\sigma$	we	get		from	Neighborhood	Size	$\sigma$	is	`r	sigma_fromNS_Fiji`.	We	get	a	much	lower	estimate	from	$\sigma^2$,	with	$\sigma$	=	`r	sigma_fromsigma2_Fiji`
+
+###	Confidence	Intervals
+
+Propagating	error	sorta	following	Pinsky	et	al.	table	S2
+
+####	Error	in	Effective	Size
+
+#####	For	Harmonic	Mean	Method
+
+```{r	Ne_CI_Fiji}
+Ne_estimates_Fiji$JackknifeHigh[which(is.na(Ne_estimates_Fiji$JackknifeHigh))]	<-	20000
+Ne_estimates_Fiji$JackknifeHigh	<-	as.numeric(Ne_estimates_Fiji$JackknifeHigh)
+Ne_estimates_Fiji$JackknifeLow	<-	as.numeric(Ne_estimates_Fiji$JackknifeLow)
+
+Ne_error_Fiji	<-	NULL
+for(n	in	1:100000){
+		hm	<-	harm_mean(mapply(runif,	n=1,	
+																			min=Ne_estimates_Fiji$JackknifeLow,
+																			max=Ne_estimates_Fiji$JackknifeHigh))
+		Ne_error_Fiji	<-	c(Ne_error_Fiji,hm)
+}
+names(Ne_error_Fiji)<-NULL
+
+ggplot(data	=	tibble(Ne_error_Fiji),	aes(x=Ne_error_Fiji))	+	geom_density()
+```
+
+#####	For	Whole	Sample	Method
+
+Can't	do	the	whole	sample	method,	because	Ne	estimate	is	"infinite"
+
+
+####	Error	in	Effective	Density
+
+Will	model	the	error	in	`meandist`	as	well...
+
+
+```{r	De_CI_Fiji}
+
+De_error_Fiji	<-	Ne_error_Fiji/	rnormTrunc(100000,mean=meandists_Fiji,
+																																											sd	=	meandists_Fiji/1.96,	min	=	1e-10)
+
+```
+
+####	Error	in	Slope
+
+```{r	Fiji_slope_error}
+
+slope_se_Fiji	<-	summary(lmodel_Fiji)$coefficients[2,2]
+
+ggplot(data	=	tibble(x	=	c(0,1e-5)),	aes(x=x))	+	stat_function(fun=dnormTrunc,	args	=	list(mean	=	slope_Fiji,	sd=slope_se_Fiji,	min	=	0))
+
+slope_error_Fiji	<-	rnormTrunc(100000,	mean	=	slope_Fiji,	sd	=	slope_se_Fiji,min	=	1e-10)
+
+ggplot(data	=	tibble(slope_error_Fiji),	aes(x=slope_error_Fiji))	+	geom_density()
+
+sigma_error_fromSlope_Fiji	<-	sqrt(1	/	(4*De_error_Fiji*slope_error_Fiji))
+
+ggplot(data	=	tibble(sigma_error_fromSlope_Fiji),	aes(x=sigma_error_fromSlope_Fiji))	+
+		geom_density()	+	xlim(0,1000)		+	scale_x_log10()
+
+quantile(sigma_error_fromSlope_Fiji,	c(0.025,	0.975))
+
+```
+
+####	Error	in	Neighborhood	Size
+
+Using	a	uniform	distribution	is	out	because	there	is	clearly	a	peaked	distribution	in	the	Migraine	output.	So	I	am	using	a	quick	fit	to	a	lognormal	distribution
+
+![Migraine_Run2_Neighborhood_Theta](figures/Da_Fiji_Neighborhood.jpg)
+
+```{r	New	Neighborhood	Size	Error	Fiji	}
+NSCI_Fiji
+qlnorm(c(0.025,0.975),meanlog	=	log(NS_Fiji),	sdlog	=	log(18.89))
+```
+
+
+```{r	New	Neighborhood	Size	Error_Fiji	}
+
+Neighborhood_error_Fiji	<-	rlnormTrunc(n	=	100000,	meanlog	=	log(NS_Fiji),	
+																																					sdlog	=	log(18.89),	min	=	NSCI_Fiji[1],	max	=	NSCI_Fiji[2])
+
+ggplot(data	=	tibble(Neighborhood_error_Fiji),	aes(x=Neighborhood_error_Fiji))	+	
+		geom_density()	+	scale_x_log10()
+
+sigma_error_fromNS_Fiji	<-	sqrt(Neighborhood_error_Fiji/(4*De_error_Fiji))
+
+names(sigma_error_fromNS_Fiji)	<-	NULL
+
+ggplot(data	=	tibble(sigma_error_fromNS_Fiji),	
+							aes(x=sigma_error_fromNS_Fiji))	+
+							geom_density()	+	scale_x_log10()
+
+```
+
+####	Plot	Dispersal	Kernels	
+
+
+```{r}
+
+kernelplot_Fiji	<-	ggplot(data.frame(x=c(0,100)),aes(x))	+
+		map(.x	=	sample(sigma_error_fromNS_Fiji,1000),	.f	=	function(sigma){
+																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																																												colour	=	"lightblue",
+																																												linetype=1,size=0.1,alpha	=	0.2)	})	+
+		map(.x	=	sample(sigma_error_fromSlope_Fiji,1000),	.f	=	function(sigma){
+																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																																												colour	=	"lightgreen",
+																																												linetype=1,size=0.1,alpha	=	0.2)	})	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_Fiji),	linetype=2,
+																														aes(color="IBD_Slope"),	show.legend	=	T)	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromsigma2_Fiji),	linetype=2,
+																														aes(color="Migraine_Sigma2"),	show.legend	=	T)	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_Fiji),	linetype=2,
+																														aes(color="Migraine_Neighborhood_Size"),	show.legend	=	T)	+
+		xlab("Alongshore	Distance	(km)")	+	ylab("Dispersal	probability	density")	+
+		scale_color_manual("Kernel",values	=	
+																				c(Migraine_Sigma2="darkblue",	
+																				Migraine_Neighborhood_Size	="blue",
+																				IBD_Slope	=	"green"))	+
+		ylim(0,0.05)
+
+
+kernelplot_Fiji
+```
+
+
+The	reason	that	the	error	is	generally	smaller	than	the	estimate	is	because	the	upper	bounds	of	Ne	are	often	unbounded,	and	treated	as	20,000.
+
+#	Society	Islands
+
+##	Traditional	Isolation	by	Distance	Method
+
+Based	on	the	OG	[@roussetGeneticDifferentiationEstimation1997]	estimator	from	slope	of	the	IBD	regression.
+
+###	Calculate	distance	matrices
+
+Weir	and	Cockerham's	Fst	and	other	basic	stats.		
+
+```{r	FST_FP,	eval=F}
+
+Daruanus.FP.hfst	<-	genind2hierfstat(Daruanus.FP)
+Daruanus.FP.loci	<-	genind2loci(Daruanus.FP)
+#gen.loci	<-	genind2loci(gen)
+stats.FP	<-	basic.stats(Daruanus.FP)
+theta.FP	<-	theta.msat(Daruanus.FP.loci)
+#mean	theta
+mean(theta.FP[,2])
+fst.FP	<-	genet.dist(Daruanus.FP.hfst,	method	=	"WC84")
+#	mean	Fis	values
+stats.FP$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+#	linearize
+fst.FP	<-	fst.FP/(1-fst.FP)
+#write.csv(as.matrix(fst.FP),	"Daruanus_FP_linearizedFst.csv",	row.names	=	F,	quote=F)
+
+
+```
+
+#####	Geographic	Distances
+
+Calculate	great	circle	distance
+
+```{r}
+gcdists_FP	<-	as.dist(pointDistance(FPpops[,c(5,4)],	lonlat=T)/1000)
+attr(gcdists_FP,	"Labels")	<-	FPpops$Abbr
+gcdists.mat_FP	<-	as.matrix(gcdists_FP)
+```
+
+Now	to	follow	what	Malin	did,	and	create	a	principal	components	axis,	and	measure	distance	along	it.
+
+```{r	rotate}
+#	because	we	only	care	about	the	x	axis,	we	need	to	reorder,so	that	Tetiaroa	comes	after	Puna	and	before	Temae
+FPpops	<-	FPpops[c(1,4,2,3,5),]
+FPpops.sp	<-	SpatialPointsDataFrame(FPpops[,c(5,4)],	data	=	FPpops,	
+																																								proj4string	=	CRS("+proj=longlat		+datum=WGS84"))
+FPpops.utm	<-	spTransform(FPpops.sp,	CRS("+proj=utm	+zone56S	+datum=WGS84"))
+#as.dist(pointDistance(localities.utm,latlon=F)/1000)
+#principal	components	without	scaling	or	centering,	we	just	want	the	rotation
+pc_FP	<-	prcomp(FPpops.utm@coords,	retx=T,	scale=F,center=F)
+plot(pc_FP$x)
+#set	PC2	axis	to	zero
+pc1_FP<-cbind(pc_FP$x[,1],0)
+
+
+pcdists_FP	<-	as.dist(pointDistance(pc1_FP,lonlat=F)/1000)
+
+attr(pcdists_FP,	"Labels")	<-	FPpops$Abbr
+#write.csv(as.matrix(pcdists),	"Apercula_pcdists.csv",	row.names	=	T,	quote=F)
+```
+
+```{r}
+pcdists.mat_FP	<-	as.matrix(pcdists_FP)
+
+#pull	out	a	few	other	distances	we'll	need
+neighbordists_FP	<-	pcdists.mat_FP[row(pcdists.mat_FP)	==	col(pcdists.mat_FP)	+	1]
+distfromP1_FP	<-	pcdists.mat_FP[,1]
+maxdist_FP	<-	max(pcdists.mat_FP)
+meandists_FP	<-	mean(neighbordists_FP)
+
+
+
+```
+
+Mean	sampling	distance	is	`r	meandists_FP`	km.	But	note	that	Tetiaroa	occurs	only	a	couple	of	kilometers	from	the	Moorea	population	because	they	are	being	forced	onto	the	rotated	X	axis.
+
+###	Create	Dispersal	Kernel
+
+
+####	Calculate	linear	model
+
+First	to	get	the	slope	$m$	we	need	to	make	a	simple	linear	model.	I	don't	think	significance	is	really	important	here,	but	we	can	calculate	that	with	a	Mantel	test.
+
+```{r	IBD_FP}
+#	mantel	test
+mantelt<-mantel.randtest(fst.FP,pcdists_FP,	nrepet	=	10000)
+
+distances	<-	tibble(distance=as.vector(pcdists_FP),fst=as.vector(fst.FP))
+
+lmodel_FP	<-	lm(fst	~	distance	,	distances)
+
+slope_FP	<-	lmodel_FP$coefficients[2]
+mantelr	<-	round(mantelt$obs,	2)
+pvalue	<-	round(mantelt$pvalue,	5)
+
+lmodel_plot_FP	<-	ggplot(distances,aes(x=distance,y=fst))	+
+																geom_point()	+	geom_smooth(method=lm)	+	xlab("Geographic	Distance	(km)")	+	
+																ylab(expression(F["ST"]/1-F["ST"]))	+	
+																geom_text(label	=	paste("m	=",	slope_FP,	
+																																								";	Mantel	r	=",	mantelr,
+																																								",	p	=",	pvalue	),	
+																										mapping	=	aes(x	=	80,	y	=	-0.002))
+
+lmodel_plot_FP
+
+
+
+#ggsave("FP_IBD.pdf",	plot=lmodel_plot,device="pdf",	width=7,	height=5,units="in")
+
+```
+
+E	voila,	c'est	positive!	But	not	significantly	so.
+
+
+###	Calculate	Effective	Size
+
+Pull	out	just	the	relevant	FP	estimates	of	Ne.	The	negative	numbers	reflect	very	high	values	of	Ne!
+
+```{r}
+
+Ne_estimates_FP	<-	Ne_estimates_f	%>%	filter(Population	%in%	FPpops$Abbr)
+
+#
+Ne_estimates_FP[,c(1:4,8,11,12)]
+
+#	harmonic	mean	of	Ne,	following	Waples	and	Do	2010
+Ne_hm_FP	<-	harm_mean(Ne_estimates_FP$Ne)
+```
+
+###	Ne	vs.	Sampling	Window
+
+Let's	cluster	the	sites	by	UPGMA	(using	Euclidean	distances)
+```{r}
+plot(hclust(pcdists_FP,"average"))
+```
+
+####	10km
+Let's	explore	Ne	and	Fis	when	lumping	populations...		First	lump	populations	that	are	less	than	10	km	apart
+
+```{r}
+stats.FP$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+meanFis_FP	<-	stats.FP$Fis	%>%	as_tibble()	%>%
+		summarize(across(everything(),mean,	na.rm=TRUE))	%>%	summarize(meanFis	=	rowMeans(.))
+
+Daruanus.FP.10km	<-	Daruanus.FP
+
+Daruanus.FP.10km@pop	<-		Daruanus.FP.10km@pop	%>%	fct_collapse(
+			TemTetia	=	c("Tetia","Tem")
+	)
+
+Daruanus.FP.10km.stats	<-	basic.stats(Daruanus.FP.10km)
+
+Daruanus.FP.10km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+meanFis_FP_10km	<-	Daruanus.FP.10km.stats$Fis	%>%	as_tibble()	%>%
+		summarize(across(everything(),mean,	na.rm=TRUE))	%>%	summarize(meanFis	=	rowMeans(.))
+
+#genind_to_genepop(Daruanus.FP.10km,output	=	"Daruanus/FP/Daruanus_FP_10km.txt")
+
+Ne_estimates_FP10km	<-	read_NeEstimator(
+																								"NeEstimator/Daruanus_LDNe_FP_10kmxLD.txt")
+
+Ne_estimates_FP10km	<-	WDFilter(Ne_estimates_FP10km,	10)
+
+
+Ne_hm_FP10km	<-	harm_mean(Ne_estimates_FP10km$Ne)
+
+```
+
+####	20km	
+
+```{r}
+Daruanus.FP.20km	<-	Daruanus.FP
+
+Daruanus.FP.20km@pop	<-		Daruanus.FP.20km@pop	%>%	fct_collapse(
+			TemTetiaMo	=	c("Tetia","Tem","Mo")
+	)
+
+Daruanus.FP.20km.stats	<-	basic.stats(Daruanus.FP.20km)
+
+Daruanus.FP.20km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+meanFis_FP_20km	<-	Daruanus.FP.20km.stats$Fis	%>%	as_tibble()	%>%
+		summarize(across(everything(),mean,	na.rm=TRUE))	%>%	summarize(meanFis	=	rowMeans(.))
+
+#genind_to_genepop(Daruanus.FP.20km,output	=	"Daruanus/FP/Daruanus_FP_20km.txt")
+
+Ne_estimates_FP20km	<-	read_NeEstimator(file	=	"NeEstimator/Daruanus_LDNe_FP_20kmxLD.txt")
+Ne_estimates_FP20km	<-	WDFilter(Ne_estimates_FP20km,	10)
+
+Ne_hm_FP20km	<-	harm_mean(Ne_estimates_FP20km$Ne)
+
+
+
+
+```
+
+####	40km	
+Now	move	up	to	40	km
+```{r}
+Daruanus.FP.40km	<-	Daruanus.FP
+
+Daruanus.FP.40km@pop	<-		Daruanus.FP.40km@pop	%>%	fct_collapse(
+			East	=	c("Tetia","Tem","Mo","Puna")
+	)
+
+Daruanus.FP.40km.stats	<-	basic.stats(Daruanus.FP.40km)
+
+Daruanus.FP.40km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+
+meanFis_FP_40km	<-	Daruanus.FP.40km.stats$Fis	%>%	as_tibble()	%>%
+		summarize(across(everything(),mean,	na.rm=TRUE))	%>%	summarize(meanFis	=	rowMeans(.))
+
+#genind_to_genepop(Daruanus.FP.40km,output	=	"Daruanus/FP/Daruanus_FP_40km.txt")
+
+Ne_estimates_FP40km	<-	read_NeEstimator(file	=	"NeEstimator/Daruanus_LDNe_FP_40kmxLD.txt")
+Ne_estimates_FP40km	<-	WDFilter(Ne_estimates_FP40km,	10)
+
+Ne_hm_FP40km	<-	harm_mean(Ne_estimates_FP40km$Ne)
+
+
+
+
+```
+
+####	300km
+
+300km	(all	pops	as	one)
+
+```{r}
+Ne_estimates_FP300km	<-	read_NeEstimator(file	=
+																																													"NeEstimator/Daruanus_LDNe_FP_1popxLD.txt")
+Ne_estimates_FP300km	<-	WDFilter(Ne_estimates_FP300km,	10)
+
+
+
+Ne_hm_FP300km	<-	Ne_estimates_FP300km$Ne
+Ne_all_FP	<-	Ne_estimates_FP300km$Ne
+
+Ne_all_FP_CI	<-	c(Ne_estimates_FP300km$ParametricLow,20000)
+```
+
+####	Figure
+
+```{r}
+FPwindows	<-	tibble(SampleWindow	=	c(0,10,40,300),
+																						hm_Ne	=	c(Ne_hm_FP,Ne_hm_FP10km,Ne_hm_FP40km,Ne_hm_FP300km))
+
+FPNevDistance	<-	ggplot(FPwindows,	aes(x	=	SampleWindow,	y	=	hm_Ne))	+	geom_point()	+	geom_line()	+	ylim(0,20000)	+	xlim(0,300)
+FPNevDistance
+#ggsave("FP_Ne_v_SampDistance.pdf",	height	=	7,	width	=	7)
+```
+
+###	Calculate	Effective	Density
+
+```{r}
+#	Divide	by	mean	distance	between	sampling	sites	to	get	density
+De_FP	<-	Ne_hm_FP/meandists_FP
+De_all_FP	<-	Ne_all_FP/maxdist_FP
+
+```
+
+Mean	density	in	the	Societies	is		`r	De_FP`	inds/km,	or	really	really	large	if	we	consider	the	whole	sample	as	a	single	population	`r	De_all_FP`
+
+
+###	Calculate	sigma
+
+Following	Rousset's	[-@roussetGeneticDifferentiationEstimation1997]	equation:
+
+$$
+\frac{1}{m}	=	4D_e\sigma^2
+$$
+
+Which	[@pinskyMarineDispersalScales2017]	re-arranged	to	give:
+
+$$
+\sigma	=	\sqrt{\frac{1}{4D_em}}
+$$
+
+So	now	let's	plug	that	into	the	first	equation!
+
+```{r	sigma}
+
+sigma_fromSlope_FP	<-	sqrt(1	/	(4*De_FP*slope_FP))
+
+sigma_fromSlope_all_FP	<-	sqrt(1	/	(4*De_all_FP*slope_FP))
+
+```
+
+So	effective	density	is	`r	signif(De_FP,4)`	individuals	per	km,	and	$\sigma$	is	`r	signif(sigma_fromSlope_FP,4)`	km	if	we	calculate	density	based	on	harmonic	mean	of	Ne,	or	`r	`signif(sigma_fromSlope_all_FP,4)`	km	if	we	calculate	it	across	the	whole	sample.
+
+##	MigraiNe	Method
+
+###	Running	MigraiNe
+
+####	First	Run
+
+I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+last	individual	in	each	population.	There	is	no	coastline	for	these	samples,
+which	each	come	from	different	islands.	I	just	measured	from	Tahiti	to	Maupiti
+It's	65	km	from	the	tip	of	Tahiti	Iti	to	Puna,	so	I	added	that	to	
+each	coordinate
+
+```{r}
+distfromP1_FP+65
+```
+
+
+```{bash	eval	=	F}
+GenepopFileName=../Daruanus_FP.txt
+DemographicModel=	LinearIBD
+#I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#last	individual	in	each	population.	There	is	no	coastline	for	these	samples,
+#	which	each	come	from	different	islands.	I	just	measured	from	Tahiti	to	Maupiti
+#	It's	65	km	from	the	tip	of	Tahiti	Iti	to	Puna,	so	I	added	that	to	
+#	each	coordinate.
+PSONMax=355	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	75.78
+#355/75.78	=	4.684	so	I	will	use	6	bins
+GeoBinNbr=6
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs.	GivenK	is	number	of	alleles
+#	at	each	locus	(Daruanus.FP@loc.n.all)
+MutationModel=PIM
+GivenK=21,24,8,37,43,26,19,16,43,31,40
+samplingSpace=,,
+samplingScale=,,
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	g
+LowerBound=0.1,1,0
+Upperbound=2,10000,1
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2
+CoreNbrForR=4
+#Plots=	all1DProfiles
+1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+#writeAdHocFiles=T
+```
+
+
+The	first	run	finished	with	an	error,	but	a	second	identical	run	completed	in	`r	3052/60`		minutes.	Both	runs	had	very	similar	results.
+
+####	Second	Run
+
+Widened	the	prior	on	theta	because	the	first	two	runs	were	over
+
+
+```{bash}
+GenepopFileName=../Daruanus_FP.txt
+DemographicModel=	LinearIBD
+#I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#last	individual	in	each	population.	There	is	no	coastline	for	these	samples,
+#	which	each	come	from	different	islands.	I	just	measured	from	Tahiti	to	Maupiti
+#	It's	65	km	from	the	tip	of	Tahiti	Iti	to	Puna,	so	I	added	that	to	
+#	each	coordinate.
+PSONMax=355	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	75.78
+#355/75.78	=	4.684	so	I	will	use	6	bins
+GeoBinNbr=6
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs.	GivenK	is	number	of	alleles
+#	at	each	locus	(Daruanus.FP@loc.n.all)
+MutationModel=PIM
+GivenK=21,24,8,37,43,26,19,16,43,31,40
+samplingSpace=,,
+samplingScale=,,
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	g
+LowerBound=0.1,1,0
+Upperbound=4,10000,1
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2
+CoreNbrForR=4
+#Plots=	all1DProfiles
+1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+#writeAdHocFiles=T
+
+
+```
+
+
+####	Fifth	Run
+
+Removed	3	loci,	used	condS2	parameterization
+
+```{bash	eval	=F}
+GenepopFileName=../../Daruanus_FP.txt
+DemographicModel=	LinearIBD
+#I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
+#last	individual	in	each	population.	There	is	no	coastline	for	these	samples,
+#	which	each	come	from	different	islands.	I	just	measured	from	Tahiti	to	Maupiti
+#	It's	65	km	from	the	tip	of	Tahiti	Iti	to	Puna,	so	I	added	that	to	
+#	each	coordinate.
+PSONMax=355	0
+#Neighborhood	size	is	based	on	mean	distance	between	populations	=	75.78
+#355/75.78	=	4.684	so	I	will	use	6	bins
+GeoBinNbr=6
+GeoUnit=	ind.km
+#alternate	way	of	specifying	the	habitat,	not	used	for	now
+#habitatPars=	0.5	0.5	400	1	0
+#habitatPars=0	0	0	300	0
+#Mutation	Model	is	K-allele	=	PIM,	with	k=2	for	SNPs.	GivenK	is	number	of	alleles
+#	at	each	locus	(Daruanus.FP@loc.n.all)
+MutationModel=PIM
+GivenK=21,8,37,26,19,16,43,40
+samplingSpace=,,condS2
+samplingScale=,,logscale
+#Analysis	-	this	will	do	5	runs	of	100	points	and
+#overwrite	those	with	10	runs	of	250	points
+writeSequence=	Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide	priors	on	Neu,	Nem	and	g
+LowerBound=0.1,1,1
+Upperbound=4,10000,100000
+oneDimCI=	2Nmu,	2Nm,	Nb,	condS2,	g
+CoreNbrForR=4
+Plots=	allProfiles
+#1DProfiles=2Nmu,	2Nm,	Nb,	condS2,	g
+extrascale=Nb=logscale
+graphicFormat=pdf
+writeAdHocFiles=T
+```
+
+Finished	in	`r	3387/60`	minutes.
+
+###	Create	Dispersal	Kernels
+
+####	Sigma	estimates
+
+This	got	me	the	following	estimates.	
+
+Output	from	run	5.
+
+```{r	migraine_parameters_FP_run5}
+
+runDir	<-	"/Users/eric/github/IBD_Kernels/Daruanus/FP/Migraine/run5"
+result	<-	read_migraine(runDir)
+		
+NS_FP	<-	result["NS"]
+NSCI_FP	<-	c(result["NSCI1"],result["NSCI2"])
+Nmu_FP	<-	result["Nmu"]
+Nm_FP	<-	result["Nm"]
+g_FP	<-	result["g"]
+lattice2geog_FP	<-	result["lattice2geog"]
+
+sigma2_FP	<-	g_to_sigma2(g_FP)
+sigma_fromsigma2_FP	<-	sqrt(sigma2_FP*lattice2geog_FP)
+sigma_fromNS_FP	<-	sqrt(NS_FP/(4*De_FP))
+sigmaCI_fromNS_FP	<-	sqrt(NSCI_FP/(4*De_FP))
+
+sigma_fromNS_all_FP	<-	sqrt(NS_FP/(4*De_all_FP))
+sigmaCI_fromNS_all_FP	<-	sqrt(NSCI_FP/(4*De_all_FP))
+
+```
+
+The	$\sigma$	we	get	from	$F_{ST}$	~	Distance	is	`r	sigma_fromSlope_FP`,	and	from	Neighborhood	Size	$\sigma$	is	`r	sigma_fromNS_FP`.	We	again	get	a	lower	estimate	from	$\sigma^2$,	with	$\sigma$	=	`r	sigma_fromsigma2_FP`
+
+###	Confidence	Intervals
+
+Propagating	error	sorta	following	Pinsky	et	al.	table	S2
+
+####	Error	in	Ne
+
+#####	For	Harmonic	Mean	Method
+
+Following	@pinskyUsingIsolationDistance2010	I	am	going	to	bootstrap	across	the	confidence	intervals	for	each	Nb	estimate.	Unfortunately,	the	new	jackknife	method	of	@jonesImprovedConfidenceIntervals2016	often	results	in	infinite	upper	bounds	with	marine	data.	I'm	going	to	use	the	jackknife	CIs.	I'm	also	going	to	use	a	uniform	distribution	for	the	error	because	approximating	the	error	structure	with	ChiSq	or	Normal	distributions	is	not	a	simple	task	and	I'm	just	trying	to	get	a	sketch	of	the	error	to	compare	with	MigraiNe	anyway.	I'm	going	to	set	"Infinite"	values	in	the	upper	CI	to	20,000	since	I	rarely	see	upper	bounds	that	high.
+
+```{r	Nb_CI_FP}
+Ne_estimates_FP$JackknifeHigh[which(is.na(Ne_estimates_FP$JackknifeHigh))]	<-	20000
+Ne_estimates_FP$JackknifeHigh	<-	as.numeric(Ne_estimates_FP$JackknifeHigh)
+Ne_estimates_FP$JackknifeLow	<-	as.numeric(Ne_estimates_FP$JackknifeLow)
+
+Ne_error_FP	<-	NULL
+for(n	in	1:100000){
+		hm	<-	harm_mean(mapply(runif,	n=1,	
+																			min=Ne_estimates_FP$JackknifeLow,
+																			max=Ne_estimates_FP$JackknifeHigh))
+		Ne_error_FP	<-	c(Ne_error_FP,hm)
+}
+names(Ne_error_FP)<-NULL
+
+ggplot(data	=	tibble(Ne_error_FP),	aes(x=Ne_error_FP))	+	geom_density()
+```
+
+#####	For	Whole	Sample	Method
+
+Naaykens	and	D'Aloia	showed	that	using	the	whole	sample	to	estimate	density	gives	pretty	similar	results	to	the	harmonic	mean	method,	so	I'm	also	going	to	try	that.	
+
+```{r}
+
+Nb	<-	Ne_all_FP
+r2_FP	<-	Ne_estimates_FP300km$r2
+#from	Waples	2006	table	2
+er2_FP	<-	1/Ne_estimates_FP300km$SampSize	+	3.19/Ne_estimates_FP300km$SampSize	^2	
+df_FP	<-	Ne_estimates_FP300km$IndAlleles
+
+WaplesMonoNe(r2_FP	-	er2_FP)
+
+#	this	shows	that	we	can	get	approximately	what	NeEstimator	gives	us...	
+#not	sure	why	its	not	exact...	must	be	missing	some	correction
+rCI_FP	<-	df_NC*r2_FP	/	(qchisq(c(0.025,0.975),	df	=	df_FP))
+WaplesMonoNe(rCI_NC	-	er2_NC)
+
+#and	now	to	get	and	plot	the	error	distribution
+Ne_error_all_FP	<-	WaplesMonoNe(((df_FP*r2_FP)/(rchisq(100000,	df	=	df_FP)))	-	er2_FP)
+
+ggplot(data	=	tibble(Ne_error_all_FP),	aes(x=Ne_error_all_FP))	+	
+		geom_density()	+	xlim(0,30000)
+																																
+```
+####	Error	in	Effective	Density
+
+```{r	Ne_CI_FP}
+
+De_error_FP	<-	Ne_error_FP	/rnormTrunc(100000,	mean	=	meandists_FP,
+																																							sd	=	(65-10)/1.96,	min	=	1e-10)
+
+De_error_all_FP	<-	Ne_error_all_FP	/	maxdist_FP
+
+ggplot(data	=	tibble(De_error_FP),	aes(x=De_error_FP))	+
+		geom_density()	+	xlim(0,1000)
+
+ggplot(data	=	tibble(De_error_all_FP),	aes(x=De_error_all_FP))	+
+		geom_density()	+	xlim(0,1000)
+
+```
+
+####	Error	in	Slope
+
+```{r	FP_slope_error}
+
+slope_se_FP	<-	summary(lmodel_FP)$coefficients[2,2]
+
+ggplot(data	=	tibble(x	=	c(1e-6,1e-4)),	aes(x=x))	+	stat_function(fun=dnormTrunc,	args	=	list(mean	=	slope_FP,	sd=slope_se_FP,	min	=	0))
+
+slope_error_FP	<-	rnormTrunc(100000,	mean	=	slope_FP,	sd	=	slope_se_FP,min	=	1e-10)
+
+ggplot(data	=	tibble(slope_error_Fiji),	aes(x=slope_error_Fiji))	+	geom_density()
+
+sigma_error_fromSlope_FP	<-	sqrt(1	/	(4*De_error_FP*slope_error_FP))
+
+sigma_error_fromSlope_all_FP	<-	sqrt(1	/	(4*De_error_all_FP*slope_error_FP))
+
+ggplot(data	=	tibble(sigma_error_fromSlope_FP),	aes(x=sigma_error_fromSlope_FP))	+
+		geom_density()	+	xlim(0,1000)
+
+ggplot(data	=	tibble(sigma_error_fromSlope_all_FP),	aes(x=sigma_error_fromSlope_all_FP))	+
+		geom_density()	+	xlim(0,1000)
+
+quantile(sigma_error_fromSlope_FP,	c(0.025,	0.975))
+
+```
+
+####	Error	in	Neighborhood	Size
+Using	a	uniform	distribution	is	out	because	there	is	clearly	a	peaked	distribution	in	the	Migraine	output.	So	I	am	using	a	quick	fit	to	a	truncated	lognormal	distribution
+
+![Migraine_Run2_Neighborhood_Theta](figures/Da_FP_Neighborhood.jpg)
+
+```{r	New	Neighborhood	Size	Error	FP	}
+NSCI_FP
+curve(dlnorm(x,	meanlog	=	log(NS_FP),	sdlog	=	log(7.9),	log	=	T))
+qlnorm(c(0.025,0.975),meanlog	=	log(NS_FP),	sdlog	=	log(206.5))
+```
+
+
+```{r	New	Neighborhood	Size	Error_FP	}
+
+Neighborhood_error_FP	<-	rlnormTrunc(n	=	100000,	meanlog	=	log(NS_FP),	
+																																					sdlog	=	log(210),	min	=	NSCI_FP[1],	max	=	Inf)
+
+
+ggplot(data	=	tibble(Neighborhood_error_FP),	aes(x=Neighborhood_error_FP))	+	
+		geom_density()	+	scale_x_log10()
+
+sigma_error_fromNS_FP	<-	sqrt(Neighborhood_error_FP/(4*De_error_FP))
+
+sigma_error_fromNS_all_FP	<-	sqrt(Neighborhood_error_FP/(4*De_error_all_FP))
+
+names(sigma_error_fromNS_FP)	<-	NULL
+
+ggplot(data	=	tibble(sigma_error_fromNS_FP),	
+							aes(x=sigma_error_fromNS_FP))	+
+							geom_density()	+	scale_x_log10()
+
+```
+
+####	Plot	Dispersal	Kernels	
+
+
+```{r}
+
+kernelplot_FP	<-	ggplot(data.frame(x=c(0,100)),aes(x))	+	
+		map(.x	=	sample(sigma_error_fromNS_FP,1000),	.f	=	function(sigma){
+																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																																												colour	=	"lightblue",
+																																												linetype=1,size=0.1,alpha	=	0.2)	})	+
+				map(.x	=	sample(sigma_error_fromSlope_FP,1000),	.f	=	function(sigma){
+																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																																												colour	=	"lightgreen",
+																																												linetype=1,size=0.1,alpha	=	0.2)	})	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_FP),	linetype=2,
+																														aes(color="IBD_Slope"),	show.legend	=	T)	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_all_FP),	linetype=2,
+																														aes(color="IBD_Slope_1pop"),	show.legend	=	T)	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromsigma2_FP),	linetype=2,
+																														aes(color="Migraine_Sigma2"),	show.legend	=	T)	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_FP),	linetype=2,
+																														aes(color="Migraine_Neighborhood_Size"),	show.legend	=	T)	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_all_FP),	linetype=2,
+																														aes(color="Migraine_Neighborhood_Size_1pop"),	show.legend	=	T)	+
+		xlab("Alongshore	Distance	(km)")	+	ylab("Dispersal	probability	density")	+
+		scale_color_manual("Kernel",values	=	
+																				c(IBD_Slope	=	"green",
+																						IBD_Slope_1pop	=	"darkgreen",
+																						Migraine_Sigma2="darkblue",	
+																				Migraine_Neighborhood_Size	="blue",
+																				Migraine_Neighborhood_Size_1pop	=	"cyan4"))	+
+		ylim(0,0.1)
+
+
+kernelplot_FP
+```
+
+#	Comparing	Across	Archipelagos
+
+```{r}
+
+NC	<-	tibble(Archipelago	=	"New	Caledonia",
+												Estimate	=	c("Mean	sampling	distance",
+																								"Fst	~	Distance	Slope",
+																								"Ne	Harmonic	Mean",
+																								"Ne	as	one	population",
+																								"Effective	Density",
+																								"Effective	Density	one	pop",
+																								"Theta",
+																								"Nm",
+																								"g",
+																								"Neighborhood	Size",
+																								"Neighborhood	Size	Low	CI",
+																								"Neighborhood	Size	High	CI",
+																								"Bin	Width",
+																								"sigma	from	slope",
+																								"sigma	from	slope;	Ne	as	one	pop",
+																								"sigma	from	NS",
+																								"sigma	from	NS;	Ne	as	one	pop",
+																								"sigma	from	sigma2"),
+													Values	=	c(meandists_NC,
+																								slope_NC,
+																								Ne_hm_NC,
+																								Ne_all_NC,
+																								De_NC,
+																								De_all_NC,
+																								Nmu_NC,
+																								Nm_NC,
+																								g_NC,
+																								NS_NC,
+																								NSCI_NC[1],
+																								NSCI_NC[2],
+																								lattice2geog_NC,
+																								NA,
+																								NA,
+																								sigma_fromNS_NC,
+																								sigma_fromNS_all_NC,
+																								sigma_fromsigma2_NC
+																								))
+
+Fiji	<-	tibble(Archipelago	=	"Fiji",
+												Estimate	=	c("Mean	sampling	distance",
+																								"Fst	~	Distance	Slope",
+																								"Ne	Harmonic	Mean",
+																								"Ne	as	one	population",
+																								"Effective	Density",
+																								"Effective	Density	one	pop",
+																								"Theta",
+																								"Nm",
+																								"g",
+																								"Neighborhood	Size",
+																								"Neighborhood	Size	Low	CI",
+																								"Neighborhood	Size	High	CI",
+																								"Bin	Width",
+																								"sigma	from	slope",
+																								"sigma	from	slope;	Ne	as	one	pop",
+																								"sigma	from	NS",
+																								"sigma	from	NS;	Ne	as	one	pop",
+																								"sigma	from	sigma2"),
+													Values	=	c(meandists_Fiji,
+																								slope_Fiji,
+																								Ne_hm_Fiji,
+																								Ne_all_Fiji,
+																								De_Fiji,
+																								NA,
+																								Nmu_Fiji,
+																								Nm_Fiji,
+																								g_Fiji,
+																								NS_Fiji,
+																								NSCI_Fiji[1],
+																								NSCI_Fiji[2],
+																								lattice2geog_Fiji,
+																								sigma_fromSlope_Fiji,
+																								NA,
+																								sigma_fromNS_Fiji,
+																								NA,
+																								sigma_fromsigma2_Fiji
+																								))
+
+FP	<-	tibble(Archipelago	=	"Societies",
+												Estimate	=	c("Mean	sampling	distance",
+																								"Fst	~	Distance	Slope",
+																								"Ne	Harmonic	Mean",
+																								"Ne	as	one	population",
+																								"Effective	Density",
+																								"Effective	Density	one	pop",
+																								"Theta",
+																								"Nm",
+																								"g",
+																								"Neighborhood	Size",
+																								"Neighborhood	Size	Low	CI",
+																								"Neighborhood	Size	High	CI",
+																								"Bin	Width",
+																								"sigma	from	slope",
+																								"sigma	from	slope;	Ne	as	one	pop",
+																								"sigma	from	NS",
+																								"sigma	from	NS;	Ne	as	one	pop",
+																								"sigma	from	sigma2"),
+													Values	=	c(meandists_FP,
+																								slope_FP,
+																								Ne_hm_FP,
+																								Ne_all_FP,
+																								De_FP,
+																								De_all_FP,
+																								Nmu_FP,
+																								Nm_FP,
+																								g_FP,
+																								NS_FP,
+																								NSCI_FP[1],
+																								NSCI_FP[2],
+																								lattice2geog_FP,
+																								sigma_fromSlope_FP,
+																								sigma_fromSlope_all_FP,
+																								sigma_fromNS_FP,
+																								sigma_fromNS_all_FP,
+																								sigma_fromsigma2_FP
+																								))												
+
+across.archipelagos	<-	bind_rows(NC,Fiji,FP)
+
+across.archipelagos.df	<-	dcast(across.archipelagos,Archipelago~Estimate)
+
+
+
+#write_csv(across.archipelagos.df,"Across_archipelago_statistics.csv")
+							
+errors	<-	enframe(c(NC_NS	=	sigma_error_fromNS_NC,
+																				NC_NS_all	=	sigma_error_fromNS_all_NC,
+																				Fiji_NS	=	sigma_error_fromNS_Fiji,
+																				Fiji_Slope	=	sigma_error_fromSlope_Fiji,
+																				FP_NS	=	sigma_error_fromNS_FP,	
+																				FP_NS_all	=	sigma_error_fromNS_all_FP,
+																				FP_Slope	=	sigma_error_fromSlope_FP,
+																				FP_Slope_all	=	sigma_error_fromSlope_all_FP),
+																		name	=	"Archipelago",	
+																		value	=	"Sigma")	%>%	
+																mutate(Archipelago	=	str_remove(Archipelago,	pattern="\\d+$"))
+
+violins	<-	ggplot(errors,	aes(x	=	Archipelago,	y	=	Sigma))	+	geom_violin()	+	
+		coord_cartesian(ylim	=	c(5,	1000))	+	
+		#geom_point(data	=	across.archipelagos,	
+		#											mapping	=	aes(x	=	"Archipelago",	y	=	"Sigma"))	+
+		scale_y_log10()
+
+boxes	<-	ggplot(errors,	aes(x	=	Archipelago,	y	=	Sigma))	+	geom_boxplot()	+	
+		coord_cartesian(ylim	=	c(5,	1000))	+	
+		#geom_point(data	=	across.archipelagos,	
+		#											mapping	=	aes(x	=	"Archipelago",	y	=	"Sigma"))	+
+		scale_y_log10()
+
+										
+```
+
+##	Make	figures	for	the	proposal
+
+```{r}
+errors.p	<-	enframe(c(`New	Caledonia`	=	sigma_error_fromNS_NC,
+																				Fiji	=	sigma_error_fromSlope_Fiji,
+																				Societies	=	sigma_error_fromSlope_FP),
+																		name	=	"Archipelago",	
+																		value	=	"Sigma")	%>%	
+																mutate(Archipelago	=	str_remove(Archipelago,	pattern="\\d+$"))
+
+#create	a	tibble	with	the	point	estimates	of	interest
+point_estimates	<-	across.archipelagos.df	%>%		select("Archipelago","sigma	from	slope")	%>%	
+		mutate(`sigma	from	slope`	=	replace(`sigma	from	slope`,2,across.archipelagos.df$`sigma	from	NS`[2]))	
+
+
+violins.p	<-	errors.p	%>%	remove_missing()	%>%	
+		mutate(Archipelago	=	factor(Archipelago,levels	=	c("New	Caledonia","Fiji","Societies")))	%>%	
+		ggplot()	+	geom_violin(mapping	=	aes(x	=	Archipelago,	y	=	Sigma))	+	
+	geom_point(data	=	point_estimates,	
+													mapping	=	aes(x	=	Archipelago,	y	=	`sigma	from	slope`),	color	=	"grey",	size	=	5)	+
+		ylim(0,1000)	+
+				coord_cartesian(ylim	=	c(1,	1000))	+	
+		scale_y_log10()
+
+ggsave("Daruanus_archipelagos_violins.pdf",violins.p)
+
+
+
+kernelplot_archipelagos	<-	ggplot(data.frame(x=c(0,250)),aes(x))	+	
+		map(.x	=	sample(sigma_error_fromNS_NC,500),	.f	=	function(sigma){
+																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																																												colour	=	"palevioletred",
+																																												linetype=1,size=0.1,alpha	=	0.1)	})	+
+	map(.x	=	sample(sigma_error_fromSlope_Fiji,500),	.f	=	function(sigma){
+																													stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																																											colour	=	"goldenrod",
+																																											linetype=1,size=0.1,alpha	=	0.1)	})	+
+	map(.x	=	sample(sigma_error_fromSlope_FP,500),	.f	=	function(sigma){
+																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																																												colour	=	"lightblue",
+																																												linetype=1,size=0.1,alpha	=	0.1)	})	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_NC),	linetype=1,
+																														aes(color="New	Caledonia"),	show.legend	=	T)	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_Fiji),	linetype=1,
+																														aes(color="Fiji"),	show.legend	=	T)	+
+		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_FP),	linetype=1,
+																														aes(color="Societies"),	show.legend	=	T)	+
+		xlab("Alongshore	Distance	(km)")	+	ylab("Dispersal	probability	density")	+
+		scale_color_manual("Archipelago",values	=	
+																				c(`New	Caledonia`	=	"red",
+																						Fiji	=	"orange",
+																						Societies="blue"	
+																			))	+
+		ylim(0,0.02)
+
+#ggsave("Darunaus_archipelagos_kernels.pdf",	kernelplot_archipelagos)
+```
+
+#	Migrate-n
+
+I	also	want	to	measure	gene	flow	between	archipelagos	with	migrate-n	and	to	show	that	this	is	doable	for	the	proposal.
+
+##	Setup
+Here's	the	parmfile	I	set	up
+```{bash	eval	=	F}
+################################################################################
+#	Parmfile	for	Migrate	3.6.4	[do	not	remove	these	first	TWO	lines]#	generated	automatically	on
+#	Fri	Feb	4	2022
+menu=NO
+nmlength=10
+datatype=Brownian
+
+
+
+weights=NO
+recover=NO
+fast-likelihood=NO
+inheritance-scalars={1.00000000000000000000}
+include-unknown=NO
+micro-threshold=10
+population-relabel={1	2	3	4}
+infile=../Daruanus_All_8locus.mig
+random-seed=AUTO	#OWN:410568459
+title=	Palythoa	tuberculosa	-	Hawaii
+progress=YES
+logfile=YES:logfile.txt
+print-data=NO
+outfile=outfile.txt
+pdf-outfile=outfile.pdf
+pdf-terse=YES
+use-M=YES
+print-tree=NONE
+mig-histogram=MIGRATIONEVENTSONLY
+skyline=NO	#needs	mig-histogram=ALL:...
+mutation=CONSTANT
+custom-migration={
+*	*	0	0
+*	*	*	0
+0	*	*	*
+0	0	*	*
+}
+geo=NO
+
+bayes-posteriorbins=	500	500
+bayes-posteriormaxtype=TOTAL
+bayes-file=YES:bayesfile
+bayes-allfile=YES:bayesallfile
+bayes-all-posteriors=YES:bayesallposterior
+bayes-proposals=	THETA	METROPOLIS-HASTINGS	Sampler
+bayes-proposals=	MIG	METROPOLIS-HASTINGS	Sampler
+bayes-proposals=	DIVERGENCE	METROPOLIS-HASTINGS	Sampler
+bayes-proposals=	DIVERGENCESTD	METROPOLIS-HASTINGS	Sampler
+bayes-priors=	THETA	WEXPPRIOR:	0.0	0.001	0.1000000	0.01000	
+bayes-priors=	MIG	WEXPPRIOR:	0.000100	1000.000000	10000	100
+bayes-priors=	RATE	*	*	UNIFORMPRIOR:	0.000000	10000000000.000000	1000000000.000000	
+bayes-hyperpriors=NO
+long-chains=1
+long-inc=100
+long-sample=10000
+burn-in=2000		
+auto-tune=YES:0.440000
+assign=NO
+heating=YES:1:{1.000000,1.500000,3.000000,5,10,1000000.000000}
+heated-swap=YES
+moving-steps=NO
+gelman-convergence=No
+replicate=YES:3
+end
+
+
+```
+
+And	the	datafile	I	converted	from	the	8-locus	genpop	file	with	PGDSpider.	
+
+The	header	looks	like
+```{bash	eval	=	F}
+4	8	.	D.	aruanus	dataset	lumped	by	archipelago	with	3	loci	removed	for	HWE	violation	-	EDC	3/28/2022
+#@M	2	3	2	2	2	2	2	2
+```
+
+##	Initial	Runs
+And	copied	up	to	Nautilus	and	ran	it	with:
+
+```{bash	eval	=	F}
+screen	-S	migrate_testrun
+
+mpirun	-np	32	~/migrate-4.4.4/src/migrate-n-mpi	parmfile
+
+#	And	on	Montastraea
+mpirun	-np	16	~/eric_data/migrate-3.7.2/src/migrate-n-mpi	parmfile
+
+```
+
+Tried	two	additional	models
+
+###	Symmetric	Stepping	Stone
+
+```{bash	eval	=F}
+custom-migration={
+*	S	0	0
+S	*	S	0
+0	S	*	S
+0	0	S	*
+}
+```
+
+###	East	to	West	Stepping	Stone
+```{bash	eval	=F}
+custom-migration={
+*	*	0	0
+0	*	*	0
+0	0	*	*
+0	0	0	*
+}
+```
+
+###	West	to	East	Stepping	Stone
+```{bash	eval=F}
+custom-migration={
+*	0	0	0
+*	*	0	0
+0	*	*	0
+0	0	*	*
+}
+
+```
+
+###	Smaller	Priors
+
+```{bash	eval	=	F}
+bayes-priors=	THETA	WEXPPRIOR:	0.0	0.01	1.000000	0.01000	
+bayes-priors=	MIG	WEXPPRIOR:	0.0100	100.000000	1000	10
+
+```
+
+This	definitely	improved	things.	Now	all	gene	flow	parameters	are	around	40!	But	the	model	marginal	likelihood	is	all	wonky.
+
+###	Divergence	with	Gene	Flow
+
+Now	I'm	going	to	add	divergence	with	gene	flow	(going	from	West	to	East).	Also	change	the	migration	parameters	to	uniform.
+
+```{	bash	eval	=F}
+
+bayes-priors=	THETA	*	*	WEXPPRIOR:	0.0	0.01	1.000000	0.01000	
+bayes-priors=	MIG	*	*	UNIFORMPRIOR:	0	100	10
+bayes-priors=	SPLIT	*	*	UNIFORMPRIOR:	0	1000		10
+bayes-priors=	SPLITSTD	*	*	UNIFORMPRIOR:	0	500	10	
+
+custom-migration={
+*							0							0							0
+D							*							0							0
+0							D							*							0
+0							0							D							*
+}
+```
+
+After	[this	exchange](https://groups.google.com/g/migrate-support/c/49njPlwp62E/m/xzy4DkU9AwAJ)	with	Peter,	I	changed	the	priors	to	be	the	same	as	Theta.
+
+```{bash	eval	=F}
+bayes-priors=	THETA	*	*	WEXPPRIOR:	0.0	0.01	1.000000	0.01000	
+bayes-priors=	MIG	*	*	UNIFORMPRIOR:	0	100	10
+divergence-distrib	=	S
+bayes-priors=	SPLIT	*	*	WEXPPRIOR:	0.0	0.01	1.000000	0.01000	
+bayes-priors=	SPLITSTD	*	*	WEXPPRIOR:	0.0	0.01	1.000000	0.01000	
+```
+
+Results	look	like	there	is	little	to	no	gene	flow	among	archipelagos
+
+###	Divergence	without	gene	flow
+
+So	let's	look	at	a	model	of	no	gene	flow
+
+```{bash	eval	=	F}
+
+custom-migration={
+*							0							0							0
+d							*							0							0
+0							d							*							0
+0							0							d							*
+}
+```
+
+##	Final	Runs
+
+OK,	so	after	some	futzing	around	with	these	models,	I	am	now	trying	11	models	for	what	I	hope	will	be	a	publishable	analysis.
+
+All	built	on	this	parmfile
+```{bash	eval	=	F}
+################################################################################
+#	Parmfile	for	Migrate	3.6.4	[do	not	remove	these	first	TWO	lines]#	generated	automatically	on
+#	Fri	Feb	4	2022
+menu=NO
+nmlength=10
+datatype=Brownian
+weights=NO
+recover=NO
+fast-likelihood=NO
+inheritance-scalars={1.00000000000000000000}
+include-unknown=NO
+micro-threshold=10
+population-relabel={1	2	3	4}
+infile=../../Daruanus_All_8locus.mig
+random-seed=AUTO	#OWN:410568459
+title=	Dascyllus	aruanus	-	South	Pacific	Archipelagos
+progress=YES
+logfile=YES:logfile.txt
+print-data=NO
+outfile=outfile.txt
+pdf-outfile=outfile.pdf
+pdf-terse=YES
+use-M=NO
+print-tree=NONE
+mig-histogram=MIGRATIONEVENTSONLY
+skyline=NO	#needs	mig-histogram=ALL:...
+mutation=CONSTANT
+custom-migration={
+*	S	0	0
+S	*	S	0
+0	S	*	S
+0	0	S	*
+}
+geo=NO
+bayes-posteriorbins=	2000	2000
+bayes-posteriormaxtype=TOTAL
+bayes-file=YES:bayesfile
+bayes-allfile=YES:bayesallfile
+bayes-all-posteriors=YES:bayesallposterior
+bayes-proposals=	THETA	METROPOLIS-HASTINGS	Sampler
+bayes-proposals=	MIG	METROPOLIS-HASTINGS	Sampler
+bayes-proposals=	SPLITSTD	METROPOLIS-HASTINGS	Sampler
+bayes-proposals=	SPLIT	METROPOLIS-HASTINGS	Sampler
+bayes-priors=	THETA	*	*	WEXPPRIOR:	0.0	0.1	20.00000	0.1000	
+bayes-priors=	MIG	*	*	UNIFORMPRIOR:	0	100	10
+divergence-distrib=	E
+bayes-priors=	SPLIT	*	*	WEXPPRIOR:	0.0	0.01	1.000000	0.01000
+bayes-priors=	SPLITSTD	*	*	WEXPPRIOR:	0.0	0.01	1.000000	0.01000
+migration=PRIOR:10
+rate=PRIOR:50
+split=PRIOR:10
+splitstd=PRIOR:10
+bayes-hyperpriors=NO
+long-chains=1
+long-inc=100
+long-sample=10000
+burn-in=10000		
+auto-tune=YES:0.440000
+assign=NO
+heating=YES:1:{1.000000,1.500000,3.000000,7,15,1000000.000000}
+heated-swap=YES
+moving-steps=NO
+gelman-convergence=No
+replicate=NO
+end
+```
+
+###	Asymmetric	Equilibrium	Gene	Flow
+
+The	"standard"	stepping	stone	model.	Gene	flow	at	equilibrium	between	neighboring	archipelagos
+
+```{}
+custom-migration={
+*	*	0	0	0
+*	*	*	0	0
+0	*	*	*	0
+0	0	*	*	*
+0	0	0	*	*
+}
+```
+
+###	Symmetric	Equilibrium	Gene	Flow
+
+Same	as	above,	but	gene	flow	in	either	direction	is	symmetric	for	each	pair	of	archipelagos
+
+```{}
+custom-migration={
+*	S	0	0	0
+S	*	S	0	0
+0	S	*	S	0
+0	0	S	*	S
+0	0	0	S	*
+}
+```
+
+###	East	To	West	Equilibrium
+
+East	to	West	gene	flow	only.	Following	the	South	Equatorial	current
+
+```{}
+custom-migration={
+*	*	0	0	0
+0	*	*	0	0
+0	0	*	*	0
+0	0	0	*	*
+0	0	0	0	*
+}
+```
+
+###	West	to	East	Equilibrium
+
+The	other	way...
+
+```{}
+custom-migration={
+*	0	0	0	0
+*	*	0	0	0
+0	*	*	0	0
+0	0	*	*	0
+0	0	0	*	*
+}
+```
+
+###	n-Island
+
+All	populations	the	same	size.	Gene	flow	between	all	populations	at	the	same	rate
+
+```{}
+custom-migration={
+m	m	m	m	m
+m	m	m	m	m
+m	m	m	m	m
+m	m	m	m	m
+m	m	m	m	m
+}
+```
+
+###	Panmixia
+
+```{}
+custom-migration={
+*
+}
+
+```
+
+###	East	to	West	Divergence	with	Gene	Flow
+
+```{}
+
+custom-migration={
+*	D	0	0	0
+0	*	D	0	0
+0	0	*	D	0
+0	0	0	*	D
+0	0	0	0	*
+}
+```
+
+###	West	to	East	Divergence	with	Gene	Flow
+
+```{}
+custom-migration={
+*	0	0	0	0
+D	*	0	0	0
+0	D	*	0	0
+0	0	D	*	0
+0	0	0	D	*
+}
+
+```
+
+###	East	to	West	Divergence	without	Gene	Flow
+
+```{}
+custom-migration={
+*	d	0	0	0
+0	*	d	0	0
+0	0	*	d	0
+0	0	0	*	d
+0	0	0	0	*
+}
+```
+
+###	West	to	East	Treemix
+
+Based on the treemix result above. Migration from the Societies to New Caledonia
+
+```{}
+custom-migration={
+*	0	0	0	0
+d	*	0	*	0
+0	d	*	0	0
+0	0	d	*	0
+0	0	0	d	*
+}
+
+```
+
+*	0	0	0	0
+*	*	0	0	0
+0	*	*	0	0
+0	0	*	*	0
+0	0	0	*	*
+###	Run	It
+
+Copy	it	up	to	Nautilus,	make	10	replicate	folders.
+
+```{bash	eval	=	F}
+scp	-r	./Models2	naut:./Daruanus2/rep1
+
+for	a	in	$(seq	2	5);	do	cp	-r	rep1	rep$a;	done
+```
+
+####	Bash	Script
+
+So	we	will	do	10	replicates	of	3	replicates.		This	will	start	at	r1,	and	run	all	models	for	that	before	moving	on.	Pretty	sure	this	will	finish	one	whole	model	before	moving	on	to	the	next	one	(since	all	threads	are	being	used	for	different	loci)
+
+
+```{bash	eval	=	F}
+#!
+for	r	in	*/
+	do
+		cd	$r
+		echo	$r
+		date
+		date	>	date.txt
+			for	m	in	*/
+					do
+				cd	$m
+						date	>	date.txt
+						echo	$m
+						date
+						mpirun	-np	32	~/eric_data/migrate-4.4.4/src/migrate-n-mpi	parmfile
+						sleep	1
+				cd	..
+					done
+		cd	..
+	done
+```
+
+####	Copy	It	Down
+
+```{bash,	eval	=	F}
+
+rsync	-av	-e	ssh	--exclude='bayes*'	--exclude="*.pdf"	--exclude="*.mig"	ecrandall@nautilus.psu.edu:~/daruanus/	output
+
+rsync	-av	-e	ssh	ecrandall@nautilus.psu.edu:~/daruanus/rep1/EtoW_DivMig	output/rep1/EtoW_DivMig
+```
+
+###	Results
+
+####	Function	library
+
+Starting	material	for	this	one	is	from	the	Ptuberculosa_migrate.rmd
+
+```{r}
+harvest.model.likelihoods	<-	function(workingDir	=	workingDir,
+																																						outfileName	=	"outfile.txt",
+																																						multilocus	=	T){
+				#	this	function	harvests	model	marginal	likelihoods	for	models	calculated	by
+				#	the	program	migrate-n	(Beerli	&	Felsenstein	2001).
+				#	It	takes	as	input	a	directory	full	of	directories,	
+				#	each	of	which	contains	output	from	a	migrate	model,	and	is	named
+				#	after	that	model.	
+		
+				#initialize	a	data	frame	to	take	the	values
+				modelMarglikes	<-	data.frame(model=character(),
+																													thermodynamic=numeric(),
+																													bezier.corrected=numeric(),	
+																													harmonic=numeric())	
+				#	loop	through	directories	in	the	working	directory,	each	of	which	is	name
+				#	after	a	different	model
+		for(i	in	list.dirs(workingDir,	full.names	=	F)[-1]){	#i<-"stepping.stone"
+						modelDir<-file.path(workingDir,i)
+						print(modelDir)
+				#scan	in	the	outfile,	separating	at	each	newline
+						outfile<-scan(file=file.path(modelDir,outfileName),
+																				what="character",sep="\n")	
+				#find	the	line	with	the	likelihoods	on	it	and	split	on	runs	of	spaces
+						marglikeline	<-	grep("Scaling	factor",outfile,value=F)-1
+						marglikeline	<-	strsplit(outfile[marglikeline],
+																															"\\s+",	perl	=	T)[[1]][3:5]
+				#		if(length(marglikeline)==0){next}
+						marglikes	<-	c(i,marglikeline)
+					
+						modelMarglikes	<-	rbind(modelMarglikes,marglikes,	deparse.level	=	2)
+		}
+		names(modelMarglikes)	<-	c("model","thermodynamic",
+																													"bezier.corrected","harmonic")
+		modelMarglikes[2:4]	<-	sapply(modelMarglikes[2:4],	as.numeric)
+		return(modelMarglikes)
+}
+
+bfcalcs<-function(df,ml="bezier.corrected"){
+		#	This	calculates	log	bayes	factors	on	data	frames	output	by
+		#	harvest.model.likelihoods(),	following	Johnson	and	Omland	(2004)
+		#	You	may	choose	the	likelihood	flavor	with
+		#	ml	=	"bezier.corrected",	"thermodynamic"	or	"harmonic"
+		#df$thermodynamic	<-	as.numeric(df$thermodynamic)
+		#df$bezier.corrected	<-	as.numeric(df$bezier.corrected)
+		#df$harmonic	<-	as.numeric(df$harmonic)
+		mlcol	<-	df[[ml]]	
+	bmvalue	<-	mlcol[which.max(mlcol)]
+	lbf	<-	2*(mlcol-bmvalue)
+	choice	<-	rank(-mlcol)
+	modelprob	<-	exp(lbf/2)/sum(exp(lbf/2))
+	dfall	<-	cbind(df,lbf,choice,modelprob)
+	return(dfall)
+}	
+
+migrants.per.gen<-function(x){
+		#a	function	for	creating	Nm	vectors	out	of	m	and	Theta	vectors.
+		#x<-x[[1]]
+		m<-names(x)[which(grepl("M_",names(x)))]	#names	of	m	columns
+		#theta<-names(x)[which(grepl("Theta_",names(x)))]	#names	of	theta	columns
+		for(n	in	m){
+				t<-paste("Theta",strsplit(n,split="_")[[1]][3],sep="_")
+				x[,paste("Nm",strsplit(n,split="_")[[1]][2],strsplit(n,split="_")[[1]][3],sep="_")]<-	x[,which(names(x)==n)]*x[,which(names(x)==t)]	
+				#this	hairy	little	statement	makes	a	new	column	named	"Nm_X_Y"	and	then	fills	it	by	multiplying	the	M_X_Y	column	by	the	Theta_Y	column	
+		}
+		return(x)
+}
+
+remove_prior	<-	function(densityd,prior,threshold	=	1e-10,	quad_prec	=	F){
+		#	this	function	removes	a	prior	from	the	
+		#	y	values	of	a	density	distributions	(density).
+		#	first	it	zeros	values	less	than	a	threshold,	then	
+		#	removes	the	prior,	then	renormalizes	so	the	density
+		#	sums	to	1.
+		#	can	optionally	use	the	mpfr	package	for	very	small	density	values.
+		require(Rmpfr)
+		densityd[which(densityd	<	threshold)]	<-	0
+		if(quad_prec){
+				densityd	<-	mpfr(densityd,precBits	=	128)
+				}
+		new	<-	(densityd/prior)/sum(densityd/prior)
+		new	<-	as.numeric(new)
+		return(new)
+}
+
+sum_over_loci	<-	function(df,parameter){
+						#this	function	takes	a	data	frame	of	probability	densities	for	many	loci
+						#	that	have	had	the	prior	removed,
+						#	together	with	with	a	logged	prior	named	"logPrior",
+						#		as	well	as	the	name	of	a	parameter	(e.g.	"Theta_1")
+						#	and	sums	the	densities	over	loci.
+						#	Rmpfr	package	allows	quadruple	precision	for	
+						#calcs	on	very	small	numbers.
+				require(Rmpfr)
+		
+				#add	a	teeny-tiny	amount	to	all	values	to	avoid	zeros
+				df2	<-	df	%>%	mutate(across(starts_with(parameter),	
+																								.fns=	function(x)	x	+	1e-11))		%>%	
+						#log	all	values
+												mutate(across(starts_with(c(parameter)),
+																		.fns=log))	%>%	
+						#	convert	the	df	to	rowwise	so	that	rows	can	be	summed
+						#	and	then	sum	across	the	row,	including	the	prior
+										rowwise()	%>%	
+										mutate(sum_param_prior	=	
+										sum(c_across(starts_with(c(parameter,"logPrior")))))	%>%	
+				#convert	back	to	a	regular	df
+										ungroup()
+				
+				#need	to	convert	to	quadruple	precision	because	
+				#these	will	exponentiate	to	very	small	numbers.
+				sum_param_prior_exp	<-	exp(mpfr(df2$sum_param_prior,	precBits	=	128))
+				#	standardize	by	dividing	by	the	sum	of	the	column
+				sum_param_prior_standardized	<-
+													sum_param_prior_exp/sum(sum_param_prior_exp)
+				
+
+				#drop	the	intermediate	columns	(no	longer	needed),	change	the	standardized
+				#	output	back	to	double	precision	so	that	it	can	be	incorporated	into	the	df
+				#	rename	the	summed	column	after	the	parameter
+						df3	<-	df2	%>%	select(-c(sum_param_prior))	%>%
+										mutate(summed_over_loci	=
+										as.numeric(sum_param_prior_standardized))	%>%	
+										rename_with(.fn	=	~	paste(parameter),	
+																						.cols	=	summed_over_loci)
+				return(df3)
+}
+
+
+
+summarize_posterior	<-	function(posterior,	
+																		parameter_type	=	c("Theta","M","Nm","D"),
+																		prior,
+																		n=16384,
+																		...){
+		#	this	function	takes	a	Migrate-n	posterior	"bayesallfile"	as	a	dataframe
+		#	as	well	as	one	of	the	parameter	types,	and	the	prior	on	that	parameter
+		#	as	a	tibble	of	x	and	y	values.	
+		#	Currently	only	exponential	priors	supported
+		#	it	will	create	densities	for	each	parameter	of	the	given	type,
+		#	remove	the	prior	from	each,	sum	across	loci,	and	re-add	the	prior	(once)
+		parameters	<-	names(posterior)	%>%
+																								str_subset(parameter_type)
+
+		#	create	a	tibble	with	x	values	for	a	density	plot
+		#		of	the	chosen	number	of	points
+		dens	<-	prior
+		
+		print("calculating	densities")
+		#	calculate	densities	for	each	parameter	of	a	given	type	at	each	locus
+		dens	<-	posterior	%>%	
+										select(starts_with(c("StepsR","Locus",
+																		paste0(parameter_type,"_"))))	%>%	
+										pivot_wider(names_from	=	"Locus",	values_from	=	
+																		starts_with(paste0(parameter_type,"_")),
+																										names_sep	=	"-")	%>%	
+										select(starts_with(paste0(parameter_type,"_")))	%>%	
+										map_dfc(function(x)	density(x,	n	=	n,	from	=	0,
+																																				bw	=	"nrd0")$y)	%>%
+										bind_cols(dens)
+		
+		#	create,	standardize,	log	and	remove	prior
+
+		#check	for	NA	values
+		#df	%>%	
+		#select_if(function(x)	any(is.na(x)))	%>%	
+		#summarise_each(funs(sum(is.na(.))))	->	extra_NA
+		
+		
+		print("removing	prior")
+		dens2	<-	dens	%>%	
+								#remove	the	prior,	standardize
+								mutate(across(starts_with(parameter_type),	
+																		~	remove_prior(densityd	=	.x,
+																																		prior	=	dens$prior,
+																																		threshold	=	1e-10,
+																																		...)	))
+
+		dens3	<-	dens2
+				
+		for(p	in	parameters){
+				print(p)		
+				dens3	<-	sum_over_loci(df	=	dens3,	parameter	=	p)
+		}
+		#	trying	to	do	the	above	loop	with	purrr:map_dfc
+		#dens4	<-	parameters	%>%	
+		#								map_dfc(.f	=	~	sum_over_loci(df	=	dens2,	parameter	=	.x))
+		return(dens3)
+}
+
+posterior_stats	<-	function(df,parameter){
+		require(spatstat.core)
+		p	<-	df	%>%	select(all_of(c("x",parameter)))	%>%	as.list(bw	=	1)
+		names(p)	<-	c("x",	"y")
+		p$bw	<-	1
+		attr(p,	"class")	<-	"density"
+		qu	<-	quantile.density(p,	c(0.025,	0.25,	0.5,	0.75,	0.975))
+		wmo	<-	p$x[which(p$y==max(p$y))]
+		wme	<-	weighted.mean(p$x,	p$y)
+		wsd	<-	sqrt(weighted.var(p$x,	p$y))
+		stats	<-	c(qu,mode	=	wmo,	mean	=	wme,	sd	=	wsd)
+		return(stats)
+}
+
+```
+
+
+####	Model	Marginal	Likelihoods
+
+```{r}
+#|	message:	false
+#|	results:	hide
+runDir	<-	"daruanus/migrate/output"
+
+likelist	<-	list()
+for(r	in	1:10){
+		rep	=	paste0("rep",r)
+		print(rep)
+		likelist[[rep]]	<-	harvest.model.likelihoods(workingDir=
+																																																	file.path(runDir,rep))
+}
+
+#	Model	selection	for	each	replicate...
+likelist	%>%	map(bfcalcs)
+```
+The	final	model	marginal	likelihood	estimates	based	on	the	mean	of	10	replicates:
+
+```{r}
+like.df	<-		likelist	%>%	bind_rows()	%>%	group_by(model)
+
+means	<-	like.df	%>%	summarize(bezier.corrected	=	mean(bezier.corrected))
+		
+
+final_model	<-	bfcalcs(means)
+
+final_model
+```
+
+#####	T-Test
+
+Difference	between	panmixia	and	the	second-place	full	model	is	very	significant.
+
+```{r}
+top.choice	<-	final_model$model[which(final_model$choice	==1)]
+second.choice	<-	final_model$model[which(final_model$choice	==2)]
+
+permTS(like.df$bezier.corrected[which(like.df$model	==	top.choice)],
+							like.df$bezier.corrected[which(like.df$model	==	second.choice)],
+							alternative	=	"greater",	method	=	"exact.ce")
+```
+
+####	Parameter	Estimates
+
+#####	Priors
+
+Here	are	the	priors	I'm	using	for	the	equilibrium	models,	as	a	reminder.
+```
+bayes-priors=	THETA	*	*	WEXPPRIOR:	0.0	0.1	1.000000	0.1000	
+bayes-priors=	MIG	*	*	UNIFORMPRIOR:	0	300	30
+divergence_distrib	=	E
+bayes-priors=	SPLIT	*	*	WEXPPRIOR:	0.0	0.01	1.000000	0.01000
+bayes-priors=	SPLITSTD	*	*	WEXPPRIOR:	0.0	0.01	1.000000	0.01000
+
+
+```
+
+```{r}
+theta_prior_params	<-	c(0,0.1,1.0)
+nm_prior_params	<-	c(0,300)
+split_prior_params	<-	c(0,0.01,1)
+
+x.theta	<-	seq(theta_prior_params[1],	theta_prior_params[3],	
+														length.out	=	n)
+
+x.mmu	<-	seq(mmu_prior_params[1],	mmu_prior_params[3],	
+														length.out	=	n)
+
+theta_prior	<-	tibble(x	=	x.theta,	prior	=	dexp(x.theta,	rate	=
+																1/theta_prior_params[2])/
+																sum(dexp(x.theta,	rate	=	1/theta_prior_params[2])))
+
+#	this	prior	gets	very	small	very	fast,	so	need	to	treat	it	differently.	Can't	use	mpfr	with	dexp,	so	just	going	to	add	a	little	bit
+mmu_prior_y	<-	dexp(x.mmu,	rate	=	1/mmu_prior_params[2])
+mmu_prior_y[which(mmu_prior_y==0)]	<-	1e-11
+mmu_prior	<-	tibble(x	=	x.mmu,	prior	=	mmu_prior_y/sum(mmu_prior_y))
+
+
+sample_from_density	<-	function(density,	n){
+		samp	<-	sample(density$x,	size	=	n,	replace	=T,	prob	=	density$y)
+		return(samp)
+}
+
+sample_from_prior	<-	function(prior,	n){
+		samp	<-	sample(prior$x,	size	=	n,	replace	=T,	prob	=	prior$y)
+		return(samp)
+}
+
+#ok,	going	to	make	a	big-assed	prior	here,	sampling	100	million	points	from	each	prior,	multiplying	them,	and	then	taking	the	density	for	16.7	million	so	that	I	can	subsample	the	area	between	0	and	1000	migrants	per	generation.
+
+nm_prior	<-	density(sample_from_prior(theta_prior,	n=1e8)	*	
+																								sample_from_prior(mmu_prior,	n=1e8),
+																								from	=	0,
+																								n	=	2^24)
+
+#	make	a	truncated	prior	for	values	between	0	and	1000.
+nm_prior_trunc	<-	tibble(x=nm_prior$x,prior=nm_prior$y)	%>%	
+														filter(x	<=	1000)
+#	but	even	that	is	not	big	enough,	so	I	will	interpolate	with	approx()
+nm_prior_interpolated	<-	approx(x	=	nm_prior_trunc$x,	y	=	nm_prior_trunc$prior,	
+																																xout	=	seq(from=0,to	=	1000,length.out=16384),
+																																rule	=	2)
+
+nm_prior_interpolated	<-	tibble(x	=	nm_prior_interpolated$x,	
+																																prior	=	nm_prior_interpolated$y)
+#standardize
+nm_prior_interpolated$prior	<-	nm_prior_interpolated$prior/
+																																						sum(nm_prior_interpolated$prior)
+
+#Theta	prior
+ggplot(theta_prior,	aes(x=x,y=prior))	+	geom_line()	+	xlim(0,0.1)
+#m/mu	prior
+ggplot(mmu_prior,	aes(x=x,y=prior))	+	geom_line()	+	xlim(0,100000)
+#nm	prior
+ggplot(nm_prior_trunc,	aes(x=x,y=prior))	+	geom_line()	
+#nm	prior	interpolated
+ggplot(nm_prior_interpolated,	aes(x=x,y=prior))	+	geom_line()
+```
+
+#####	Read	in	the	posterior	and	make	a	labeling	key
+
+```{r}
+winningModelDir	<-	"daruanus/migrate/output/rep1/EtoW_DivMig"
+
+#	for	some	reason	the	bayesallfile	has	39	columns,	but	only	31	are	labelled.
+
+#	read	in	a	population	key	to	translate	numbers	into	names	in	figures
+popkey	<-	read_csv("daruanus/popkey.csv")
+names(popkey$Pop)	<-	popkey$Index
+
+
+#read	in	the	posterior	for	one	replicate	this	may	take	a	minute	or	two
+posterior	<-	read_delim(file.path(winningModelDir,"bayesallfile"),	
+																								comment	=	"#")	%>%	
+																		mutate(StepsR	=	paste(Replicate,Steps))	%>%	
+																		filter()
+
+#calculate	migrants	per	generation
+posterior	<-	migrants.per.gen(posterior)
+
+#	posterior_long	<-	posterior	%>%	
+#																			pivot_longer(starts_with(c("Theta_",	"M_",	"Nm_","D_",	"d_")),
+#																																names_to	=	"parameter",	
+#																																values_to	=	"value")
+#make	a	new	labeling	key
+posterior_parameters	<-	names(posterior)[str_which(names(posterior),
+																																																			paste(c("Theta_",	
+																																																											"xNm_","D_",	"S_"),	
+																																																									collapse	=	"|"))]
+
+parameter_key	<-	posterior_parameters	%>%	
+																																		str_replace("(\\d)_(\\d)",	"\\1	to	\\2")	%>%
+																																		str_replace("D_",	"divergence	"	)	%>%	
+																																		str_replace("S_",	"divergenceSD	"	)	%>%	
+																																		str_replace("Theta_",	"theta	")	%>%	
+																																		str_replace_all(popkey$Pop)	%>%	
+																																		str_replace("xNm_",	"4Nem	")	
+																																		
+
+names(parameter_key)	<-	posterior_parameters
+
+
+```
+
+#####	Check	Convergence
+
+```{r}
+posterior.grouped	<-	posterior	%>%	
+																						select(all_of(c("Locus",
+																																								"Steps",
+																																								posterior_parameters)))	%>%	
+																						group_by(Locus)
+
+posterior.reps	<-	group_split(posterior.grouped)
+posterior.key	<-	group_keys(posterior.grouped)
+																								
+posterior.mcmc	<-	mcmc.list(lapply(posterior.reps,mcmc))
+posterior.ggs	<-	ggs(posterior.mcmc)
+#ggmcmc(posterior.ggs,	param_page	=	4)
+
+```
+
+######	Theta
+
+And	here	I	run	the	code	for	the	$\theta$	estimates
+
+```{r}
+
+#posterior_thetaf	%>%	filter(Locus	==	1)	%>%	
+#										ggplot(aes(x	=	Steps,	y	=	Theta_2))	+
+#																		geom_path()	+	scale_y_log10()
+
+parameter_type	<-	"Theta"
+
+parameters	<-	names(posterior)	%>%
+																								str_subset(parameter_type)
+
+parameter_key2	<-	parameters
+names(parameter_key2)	<-	parameter_key[names(parameter_key)	%in%	parameter_key2]
+
+#summarize	the	posterior	for	theta
+thetas	<-	summarize_posterior(posterior,	parameter_type	=	"Theta",	
+																														prior=theta_prior)
+
+#convert	to	long	format
+thetas_long	<-	thetas	%>%	select(all_of(c("x","prior",parameters)))	%>%	
+																pivot_longer(starts_with(c(paste0(parameter_type,"_"))),	
+																												names_to	=	"Parameter",
+																												values_to	=	"Density")
+															
+#plot
+ggplot(thetas_long,	aes(x	=	x,	y	=	Density,	
+																				color	=	Parameter))	+
+								geom_line(linewidth	=	1)	+	
+								#scale_x_log10()	+	
+								scale_color_brewer(palette	=	"Spectral",	labels	=	parameter_key)	+
+								geom_line(aes(x	=	x,	y=prior),	color	=	"grey",
+																		linetype="dotted")	+
+								xlim(0.095,0.1)
+#	get	stats	for	each	summed-over-loci	posterior
+
+theta_stats	<-	parameter_key2	%>%	map_dfr(.f	=	~	posterior_stats(df	=	thetas,	
+																																																													parameter	=	.x),
+																																						.id	=	"parameter")
+```
+
+Need	to	check	convergence	for	these	things,	and	that	there	was	sufficient	burnin.
+
+######	M/mu
+
+And	here	I	run	the	code	for	the	$m/\mu$	estimates
+
+```{r}
+
+
+parameter_type	<-	"M"
+
+parameters	<-	names(posterior)	%>%
+																								str_subset(parameter_type)
+
+parameter_key2	<-	parameters
+names(parameter_key2)	<-	parameter_key[names(parameter_key)	%in%	
+																																									parameter_key2]
+
+#summarize	the	posterior	for	theta
+mmu	<-	summarize_posterior(posterior_thetaf,	parameter_type	=	"M",	
+																														prior	=	mmu_prior,	quad_prec	=	T)
+
+#convert	to	long	format
+mmu_long	<-	mmu	%>%	select(all_of(c("x","prior",parameters)))	%>%	
+																pivot_longer(starts_with(c(paste0(parameter_type,"_"))),	
+																												names_to	=	"Parameter",
+																												values_to	=	"Density")
+
+nm.palette	<-	colorRampPalette(brewer.pal(9,"Spectral"))																
+#plot
+ggplot(mmu_long,	aes(x	=	x,	y	=	Density,	
+																				color	=	Parameter))	+
+								geom_line(linewidth	=	0.5)	+	
+								#scale_x_log10(limits=c(1e6,1e7))
+								scale_color_discrete(type=nm.palette(12),	labels	=	parameter_key)+
+								xlim(7e6,7.5e6)
+#	get	stats	for	each	summed-over-loci	posterior
+
+mmu_stats	<-	parameter_key2	%>%	map_dfr(.f	=	~	posterior_stats(df	=	mmu,	
+																																																						parameter	=	.x),
+																																						.id	=	"parameter")
+mmu_stats
+```
+
+######	4Nm
+
+And	here	I	run	the	code	for	the	`4Nm`	estimates
+
+```{r}
+
+parameter_type	<-	"Nm"
+
+parameters	<-	names(posterior)	%>%
+																								str_subset(parameter_type)
+
+parameter_key2	<-	parameters
+names(parameter_key2)	<-	parameter_key[names(parameter_key)	%in%	parameter_key2]
+
+#summarize	the	posterior	for	theta
+Nm	<-	summarize_posterior(posterior_thetaf,	parameter_type	=	"Nm",	
+																														prior	=	nm_prior_interpolated)
+
+#convert	to	long	format
+Nm_long	<-	Nm	%>%	select(all_of(c("x","prior",parameters)))	%>%	
+																pivot_longer(starts_with(c(paste0(parameter_type,"_"))),	
+																												names_to	=	"Parameter",
+																												values_to	=	"Density")
+
+nm.palette	<-	colorRampPalette(brewer.pal(9,"Spectral"))			
+														
+#plot
+		ggplot(Nm_long,	aes(x	=	x,	y	=	Density,	
+																				color	=	Parameter))	+
+								geom_line(linewidth	=	0.5)	+	
+								scale_color_discrete(type=nm.palette(12),	labels	=	parameter_key)	+
+								xlim(0,30)
+#	get	stats	for	each	summed-over-loci	posterior
+
+nm_stats	<-	parameter_key2	%>%	map_dfr(.f	=	~	posterior_stats(df	=	Nm,	
+																																																													parameter	=	.x),
+																																						.id	=	"parameter")
+nm_stats
+```
+
+#	Treemix
+
+I	want	to	check	out	what	Treemix	can	do	with	this	dataset,	and	see	if	it	has	any	insight	into	directionality.	The	treemix	manual	says:
+
+>the	entries	for	each	population	are	the	mean	length,	variance	in	length,	and	number	of	haplotypes	at	each	microsatellite	in	each	population,	again	comma-delimited.
+
+##	Convert	data
+
+Here	is	code	to	convert	genepop	format	to	treemix	format:
+
+```{r,	eval=F}
+
+pops	<-	c("PNG","New	Caledonia","Fiji",	"Societies","Tuamotus")
+loci	<-	c("Locus_1","Locus_2","Locus_3","Locus_4","Locus_5","Locus_6",
+																																							"Locus_7","Locus_8")
+
+Daruanus4pop	<-	read.genepop("Daruanus/Daruanus_All_8locus_5pops.gen",	
+																													ncode	=	3L)
+levels(Daruanus4pop@pop)<-	pops
+
+
+Daruanus4pop.gtypes	<-	genind2gtypes(Daruanus4pop)
+
+popmatrix	<-	tibble(Daruanus4pop.gtypes@data)	%>%	
+																				mutate(allele	=	as.numeric(allele))	%>%	
+																				group_by(stratum,locus)
+																								
+
+popsumlong	<-	popmatrix		%>%		summarize(mean	=	mean(allele,na.rm=T),	
+																																		var	=	var(allele,	na.rm=T),
+																																		n	=	n())
+
+popsumwide	<-	popsumlong	%>%	pivot_wider(names_from	=	stratum,	
+																																								values_from	=	c(mean,var,n))
+
+popsumwide	<-	popsumwide[,c("mean_PNG","var_PNG","n_PNG",
+																												"mean_New	Caledonia","var_New	Caledonia",
+																												"n_New	Caledonia",
+																												"mean_Fiji","var_Fiji","n_Fiji",
+																												"mean_Societies","var_Societies","n_Societies",
+																												"mean_Tuamotus","var_Tuamotus","n_Tuamotus")]
+
+#write_csv(popsumwide,"Daruanus/treemix/Daruanus_treemix.txt")
+
+```
+
+
+Did	a	search	and	replace	in	`bbedit`	to	make	the	final	file	format,	and	then	gzipped	it.
+
+```
+Search:	(,[\d\.]+,\d+),
+Replace	\1	
+```
+
+##	Explore	Treemix
+
+Installed	`Treemix`	on	Argonaute	via	Mamba.	Had	to	follow	[these](https://stackoverflow.com/questions/22222666/error-while-loading-shared-libraries-libgsl-so-0-cannot-open-shared-object-fil)	instructions	to	add	`libgsl.so.25`	to	`/etc/ld.so.conf`	first
+
+I'm	first	going	to	try	a	variety	of	m	values	and	root	at	New	Caledonia	and	Tuamotus.
+
+```{bash,	eval	=	F}
+(base)	eric@Saraswati	~/github/IBD_Kernels/Daruanus/treemix$	treemix	-i	Daruanus_treemix.txt.gz	-o	PNG_0m	-micro	-root	PNG	-global																																																																																																																																																																					✖	✹	✭main	
+
+TreeMix	v.	1.13
+$Revision:	231	$
+
+npop:5	nsnp:8
+Estimating	covariance	matrix	in	8	blocks	of	size	1
+SEED:	1670724878
+Starting	from:
+((Fiji:4.44185,Tuamotus:7.32221):0,Societies:0);
+Adding	PNG	[4/5]
+ln(likelihood):	-17.411228	
+(PNG:5.50807,(Fiji:1.12789,(Tuamotus:4.74938,Societies:0):5.11134):5.50807);
+Adding	NewCaledonia	[5/5]
+ln(likelihood):	-25.594418	
+((Fiji:1.60844,(PNG:6.74548,NewCaledonia:0):3.60694):2.43321,(Tuamotus:4.78333,Societies:0):2.43321);
+Testing	global	rearrangements
+Fiji:1.60844	PNG:6.74548
+-26.530906	-25.594418
+Fiji:1.60844	Societies:0
+-28.39933	-25.594418
+PNG:6.74548	Fiji:1.60844
+-26.530906	-25.594418
+NewCaledonia:0	Tuamotus:4.78333
+-28.219739	-25.594418
+Societies:0	Fiji:1.60844
+-28.39933	-25.594418
+Set	root	above	PNG
+DONE.
+
+
+treemix	-i	Daruanus_treemix.txt.gz	-o	PNG_0m	-micro	-root	PNG	-global	-m	0
+treemix	-i	Daruanus_treemix.txt.gz	-o	PNG_1m	-micro	-root	PNG	-global	-m	1
+treemix	-i	Daruanus_treemix.txt.gz	-o	PNG_2m	-micro	-root	PNG	-global	-m	2
+treemix	-i	Daruanus_treemix.txt.gz	-o	PNG_3m	-micro	-root	PNG	-global	-m	3
+treemix	-i	Daruanus_treemix.txt.gz	-o	PNG_4m	-micro	-root	PNG	-global	-m	4
+treemix	-i	Daruanus_treemix.txt.gz	-o	PNG_5m	-micro	-root	PNG	-global	-m	5
+treemix	-i	Daruanus_treemix.txt.gz	-o	PNG_6m	-micro	-root	PNG	-global	-m	6
+
+
+treemix	-i	Daruanus_treemix.txt.gz	-o	Tua_0m	-micro	-root	Tuamotus	-global	-m	0	
+treemix	-i	Daruanus_treemix.txt.gz	-o	Tua_1m	-micro	-root	Tuamotus	-global	-m	1	
+treemix	-i	Daruanus_treemix.txt.gz	-o	Tua_2m	-micro	-root	Tuamotus	-global	-m	2	
+treemix	-i	Daruanus_treemix.txt.gz	-o	Tua_3m	-micro	-root	Tuamotus	-global	-m	3	
+treemix	-i	Daruanus_treemix.txt.gz	-o	Tua_4m	-micro	-root	Tuamotus	-global	-m	4	
+treemix	-i	Daruanus_treemix.txt.gz	-o	Tua_5m	-micro	-root	Tuamotus	-global	-m	5
+
+```
+
+###	Plot
+
+There	are	never	more	than	two	edges	added.	One	from	Fiji	to	Societies,	and	the	other	from	New	Caledonia	to	Tuamotus...
+
+```{r}
+source("Daruanus/treemix/plotting_funcs.R")
+setwd("Daruanus/treemix/5pop_explore")
+plot_tree("PNG_0m")
+plot_resid("PNG_0m",	"../5poporder.txt")
+plot_tree("PNG_1m")
+plot_resid("PNG_1m",	"../5poporder.txt")
+plot_tree("PNG_2m")
+plot_resid("PNG_2m",	"../5poporder.txt")
+plot_tree("PNG_3m")
+plot_tree("PNG_4m")
+plot_tree("PNG_5m")
+plot_tree("PNG_6m")
+
+plot_tree("PNG_2mse")
+plot_resid("PNG_2mse",	"../5poporder.txt")
+
+plot_tree("Tua_0m")
+plot_tree("Tua_1m")
+plot_tree("Tua_2m")
+plot_tree("Tua_3m")
+plot_tree("Tua_4m")
+plot_tree("Tua_4m")
+plot_tree("Tua_5m")
+plot_tree("Tua_6m")
+
+```
+##	How	many	migration	events?
+
+
+```{bash,	eval	=F}
+setwd("5pops")
+for	m	in	{1..10};	do
+								#	Generate	random	seed
+								s=$RANDOM
+								treemix	-i	../Daruanus_treemix.txt.gz	-o	PNG.${m}	-global	-m	${m}	-seed	${s}	-micro
+done
+
+plot_tree("PNG.1")
+```
+
+The	log	likelihood	reaches	a	plateau	of	-21.9889	at	6	migration	events
+
+##	Orientagraph
+
+Installed	according	to	instructions	given	[here](https://github.com/sriramlab/OrientAGraph)
+
+```{bash,	eval	=	F}
+					
+
+orientagraph	-i	../Daruanus_treemix.txt.gz	-o	PNG_0m_mlno	-micro	-root	PNG	-global	-m	0	-mlno
+
+orientagraph	-i	../Daruanus_treemix.txt.gz	-o	PNG_1m_mlno	-micro	-root	PNG	-global	-m	1	-mlno	1
+
+orientagraph	-i	../Daruanus_treemix.txt.gz	-o	PNG_2m_mlno	-micro	-root	PNG	-global	-m	2	-mlno	1,2
+
+orientagraph	-i	../Daruanus_treemix.txt.gz	-o	PNG_3m_mlno	-micro	-root	PNG	-global	-m	3	-mlno	1,2,3	
+
+orientagraph	-i	../Daruanus_treemix.txt.gz	-o	PNG_4m_mlno	-micro	-root	PNG	-global	-m	4	-mlno	1,2,3,4	
+
+orientagraph	-i	../Daruanus_treemix.txt.gz	-o	PNG_5m_mlno	-micro	-root	PNG	-global	-m	5	-mlno	1,3,5	
+
+
+```
+
+```{r}
+setwd("orientagraph_5pop/")
+plot_tree("Tua_2m")
+plot_tree("PNG_6m_mlno135")
+plot_resid("PNG_6m_mlno135","../5poporder.txt")
+```
+
+

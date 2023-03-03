@@ -1,0 +1,38 @@
+GenepopFileName=../Daruanus_NC.txt
+DemographicModel=LinearIBD
+# I modified the genepop file by adding sampling coordinates as the name of the 
+# last individual in each population. These coordinates were distances in km along 
+# a the mostly linear SW coastline of New Caledonia, 
+# which runs a total of ~612km. It is ~418km to the first population at Mara, 
+# so I am adding that value to the coordinates in the file.
+PSONMin=0 0
+PSONMax=612 0
+#Neighborhood size is based on mean distance between populations = 25.08
+#612/25.08 = 24.40 so I will use 25 bins
+GeoBinNbr=25
+GeoUnit= ind.km
+#alternate way of specifying the habitat, not used for now
+#habitatPars= 0.5 0.5 400 1 0
+#habitatPars=0 0 0 300 0
+#Mutation Model is K-allele = PIM, with k=2 for SNPs
+MutationModel=PIM
+GivenK=26,35,11,57,47,32,30,23,57,34,44
+#sampling - this performs uniform sampling of ln(sigma^2), which is the quantity we are interested in
+samplingSpace=,,
+samplingScale=,,
+#Analysis - this will do 5 runs of 100 points and
+#overwrite those with 10 runs of 250 points
+writeSequence= Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide priors on Neu, Nem and g
+LowerBound=0.1,1,0
+Upperbound=1,2500,1
+oneDimCI= 2Nmu, 2Nm, Nb, condS2
+CoreNbrForR=4
+#Plots= all1DProfiles
+1DProfiles=2Nmu, 2Nm, Nb, condS2, g
+extrascale=Nb=logscale
+graphicFormat=pdf
+#writeAdHocFiles=T

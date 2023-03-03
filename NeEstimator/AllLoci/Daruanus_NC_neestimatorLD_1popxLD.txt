@@ -1,0 +1,24 @@
+Output from NeEstimator v2.1
+Starting time: Fri Feb 25 13:37:05 2022
+Input File: "Daruanus_NC_1pop.txt"
+
+Number of Loci = 11
+
+
+LINKAGE DISEQUILIBRIUM METHOD, Mating Model: Monogamy
+
+Lowest allele frequencies used:     0.0500    0.0400    0.0300    0.0200   "No S*"
+("No S*": No Singleton Allele is accepted)
+Up to 17 rightmost characters are shown for Population name.
+-------------------------------------------------------------
+                   	         	      	             	            	         	          	         	    Parametric CI		    Jackknife CI
+Population [#:Name]	Samp Size	PCrit.	Weighted Mean	Ind. Alleles	    r^2  	  Exp(r^2)	     Ne  	       Low	      High	       Low	      High	  (Eff.df)
+1:Mara_Mara1       	    367  	0.0500	     366.0   	      1307  	 0.002909	  0.002756	   4366.4	    1710.4	  Infinite	     925.9	  Infinite	       266
+                   	         	0.0400	     365.3   	      2486  	 0.002890	  0.002761	   5169.6	    2245.6	  Infinite	    1774.4	  Infinite	      1197
+                   	         	0.0300	     365.2   	      4421  	 0.002886	  0.002762	   5385.5	    2686.5	   93808.7	    1894.4	  Infinite	      1384
+                   	         	0.0200	     364.8   	     11221  	 0.002874	  0.002765	   6118.0	    3588.8	   18944.3	    2429.0	  Infinite	      2528
+                   	         	 No S*	     365.0   	     56432  	 0.002871	  0.002764	   6212.1	    4723.2	    8998.7	    3273.6	   42509.3	      7190
+
+Ending time: Fri Feb 25 13:37:07 2022
+-------------------------------------
+

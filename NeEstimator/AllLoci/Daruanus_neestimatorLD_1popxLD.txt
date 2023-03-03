@@ -1,0 +1,24 @@
+Output from NeEstimator v2.1
+Starting time: Mon Feb 21 21:23:40 2022
+Input File: "Daruanus_Fauvelot_1pop.gen"
+
+Number of Loci = 11
+
+
+LINKAGE DISEQUILIBRIUM METHOD, Mating Model: Monogamy
+
+Lowest allele frequencies used:     0.0500    0.0400    0.0300    0.0200   "No S*"
+("No S*": No Singleton Allele is accepted)
+Up to 17 rightmost characters are shown for Population name.
+-------------------------------------------------------------
+                   	         	      	             	            	         	          	         	    Parametric CI		    Jackknife CI
+Population [#:Name]	Samp Size	PCrit.	Weighted Mean	Ind. Alleles	    r^2  	  Exp(r^2)	     Ne  	       Low	      High	       Low	      High	  (Eff.df)
+1:Mo31-92          	   1358  	0.0500	    1349.3   	      1677  	 0.001819	  0.000743	    616.8	     550.2	     692.5	     465.8	     823.8	       275
+                   	         	0.0400	    1349.9   	      2289  	 0.001686	  0.000742	    704.1	     635.1	     782.0	     617.7	     804.8	      1416
+                   	         	0.0300	    1349.0   	      4857  	 0.001413	  0.000743	    991.9	     912.8	    1080.1	     736.3	    1373.8	       359
+                   	         	0.0200	    1348.9   	      8589  	 0.001219	  0.000743	   1397.2	    1295.5	    1510.5	    1133.8	    1756.0	      1068
+                   	         	 No S*	    1348.2   	     69543  	 0.000992	  0.000743	   2674.0	    2565.6	    2790.1	    2297.5	    3161.8	      4838
+
+Ending time: Mon Feb 21 21:23:50 2022
+-------------------------------------
+

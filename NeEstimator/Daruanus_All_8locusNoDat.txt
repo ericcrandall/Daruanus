@@ -1,0 +1,119 @@
+Missing data from input file Daruanus_All_8locus.gen.
+
+Possible four types of missing data at a locus:
+	1. Genotype contains only zeros or partially scored.
+	2. Genotype has less digits than normal one.
+	3. Genotype has more digits than normal one.
+	4. Genotype contains non-digit character.
+Types 3 and 4 stop the program.
+
+In the table, each row is for an individual with missing data
+(a) If column 'Locus' has only one number, then it is the first
+    locus with missing data and also of highest missing data type.
+(b) If column 'Locus' has 2 numbers, then the first number is
+    the first locus with data missing, and the second number is
+    the first locus that has highest missing data type.
+(c) Genotype column contains the genotype of the locus in case (a)
+    or the second locus in case (b).
+
+Population 12 [Nadi_Nadi1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+      26            4           000000             1
+-----------------------------------------------------------
+Total missing data for population   12:            1
+
+Population 13 [Puna_Puna1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   13:            0
+
+Population 14 [QBW_QBW1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+       9            7           000000             1
+-----------------------------------------------------------
+Total missing data for population   14:            1
+
+Population 15 [Rangi_Rangi1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   15:            0
+
+Population 16 [Suva_Suva1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   16:            0
+
+Population 17 [Taga_Taga1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   17:            0
+
+Population 18 [Tahaa_Tahaa1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   18:            0
+
+Population 19 [Taka_Taka1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+      19            5           000000             1
+-----------------------------------------------------------
+Total missing data for population   19:            1
+
+Population 20 [Tave_Tave1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   20:            0
+
+Population 21 [Tem_Tem1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   21:            0
+
+Population 22 [Ten_Ten1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   22:            0
+
+Population 23 [Tetia_Tetia1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   23:            0
+
+Population 24 [Tote_Tote1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   24:            0
+
+Population 25 [Yanu_Yanu1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+-----------------------------------------------------------
+Total missing data for population   25:            0
+

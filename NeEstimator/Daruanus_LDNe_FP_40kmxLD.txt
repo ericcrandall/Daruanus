@@ -1,0 +1,28 @@
+Output from NeEstimator v2.1
+Starting time: Wed Mar 16 23:04:54 2022
+Input File: "Daruanus_FP_40km.txt"
+
+Number of Loci = 8
+
+
+LINKAGE DISEQUILIBRIUM METHOD, Mating Model: Monogamy
+
+Lowest allele frequencies used:     0.0500    0.0400    0.0300    0.0200    0.0100
+Up to 17 rightmost characters are shown for Population name.
+-------------------------------------------------------------
+                   	         	      	             	            	         	          	         	    Parametric CI		    Jackknife CI
+Population [#:Name]	Samp Size	PCrit.	Weighted Mean	Ind. Alleles	    r^2  	  Exp(r^2)	     Ne  	       Low	      High	       Low	      High	  (Eff.df)
+1:Tahaa_Tahaa1     	     36  	0.0500	      36.0   	      1175  	 0.034301	  0.030239	    161.4	      92.3	     457.5	      80.9	     911.5	       698
+                   	         	0.0400	      36.0   	      1502  	 0.034832	  0.030239	    142.4	      89.5	     296.2	      80.0	     417.6	       900
+                   	         	0.0300	      36.0   	      1502  	 0.034832	  0.030239	    142.4	      89.5	     296.2	      80.0	     417.6	       900
+                   	         	0.0200	      36.0   	      2525  	 0.032537	  0.030239	    287.4	     157.1	    1156.0	     127.8	  Infinite	      1169
+                   	         	0.0100	      36.0   	      4679  	 0.031937	  0.030239	    389.9	     217.1	    1504.8	     220.6	    1372.3	      5024
+2:TemTetiaMo_Tem1  	    405  	0.0500	     405.0   	       955  	 0.002413	  0.002489	  -8862.0	    4250.7	  Infinite	    2812.0	  Infinite	       552
+                   	         	0.0400	     405.0   	      1354  	 0.002512	  0.002489	  28725.3	    2977.5	  Infinite	    2215.3	  Infinite	       738
+                   	         	0.0300	     405.0   	      1927  	 0.002508	  0.002489	  34192.1	    3587.0	  Infinite	    2982.7	  Infinite	      1309
+                   	         	0.0200	     405.0   	      2655  	 0.002481	  0.002489	 -86891.9	    5071.3	  Infinite	    4042.2	  Infinite	      1759
+                   	         	0.0100	     405.0   	      3923  	 0.002529	  0.002489	  16665.5	    4278.0	  Infinite	    3454.8	  Infinite	      2298
+
+Ending time: Wed Mar 16 23:04:55 2022
+-------------------------------------
+

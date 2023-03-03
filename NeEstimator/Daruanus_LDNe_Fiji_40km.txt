@@ -1,0 +1,103 @@
+Output from NeEstimator v2.1
+Starting time: Wed Mar 16 21:18:59 2022
+Input File: "Daruanus_Fiji_40km.txt"
+
+Number of Loci = 8
+
+LD mating model: Monogamy
+
+Population     1 [center_Yanu1]  (Number of Individuals = 99)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       0.010         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =       99.0        99.0        99.0        99.0        99.0        99.0
+Independent Comparisons =        840        1040        1807        3456        7800       11734
+OverAll r^2 =                 0.010997    0.011182    0.010406    0.010527    0.010532    0.010311
+Expected r^2 Sample =         0.010426    0.010426    0.010426    0.010426    0.010426    0.010426
+Estimated Ne^ =                 1165.9       879.7    Infinite      6651.9      6315.4    Infinite
+
+95% CIs for Ne^
+* Parametric                     388.8       371.3       960.0      1081.8      1498.7      4351.9
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+* JackKnife on Samples           318.0       240.2       590.8       688.0       888.8      1461.0
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+**************************************************************************************************
+
+Population     2 [east_Suva1]  (Number of Individuals = 110)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       0.010         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =      110.0       110.0       110.0       110.0       110.0       110.0
+Independent Comparisons =       1002        1357        2102        2878        5198       14688
+OverAll r^2 =                 0.009852    0.009496    0.009314    0.009373    0.009625    0.009517
+Expected r^2 Sample =         0.009355    0.009355    0.009355    0.009355    0.009355    0.009355
+Estimated Ne^ =                 1337.9      4693.7    Infinite     35996.8      2465.9      4095.7
+
+95% CIs for Ne^
+* Parametric                     466.7       738.8      1210.2      1273.7      1021.2      1732.8
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+* JackKnife on Samples           393.2       537.2       704.1       980.7       662.5       720.8
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+**************************************************************************************************
+
+Population     3 [Nadi_Nadi1]  (Number of Individuals = 51)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       0.010         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =       50.7        50.7        50.6        50.5        50.5        50.7
+Independent Comparisons =        874        1153        1578        2608        4771        8237
+OverAll r^2 =                 0.021608    0.021330    0.021799    0.021235    0.021566    0.021263
+Expected r^2 Sample =         0.020979    0.020975    0.021003    0.021033    0.021054    0.020960
+Estimated Ne^ =                 1057.5      1874.1       834.4      3305.3      1297.7      2198.4
+
+95% CIs for Ne^
+* Parametric                     234.8       299.0       274.9       472.5       471.8       686.3
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+* JackKnife on Samples           190.1       254.9       181.1       328.5       325.9       412.6
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+**************************************************************************************************
+
+Population     4 [west_Mata1]  (Number of Individuals = 98)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       0.010         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =       98.0        98.0        98.0        98.0        98.0        98.0
+Independent Comparisons =        879        1216        1929        3166        7305       12157
+OverAll r^2 =                 0.011330    0.010873    0.010994    0.010544    0.010941    0.010698
+Expected r^2 Sample =         0.010536    0.010536    0.010536    0.010536    0.010536    0.010536
+Estimated Ne^ =                  837.3      1979.6      1452.5     91377.2      1644.9      4112.6
+
+95% CIs for Ne^
+* Parametric                     342.3       528.5       559.2      1216.9       865.0      1525.9
+                              Infinite    Infinite    Infinite    Infinite     11434.4    Infinite
+
+* JackKnife on Samples           206.4       376.2       376.8       779.0       633.9       902.7
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+**************************************************************************************************
+
+Ending time: Wed Mar 16 21:19:00 2022
+-------------------------------------
+

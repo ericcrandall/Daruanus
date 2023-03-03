@@ -1,0 +1,37 @@
+GenepopFileName=../../Daruanus_FP.txt
+DemographicModel= LinearIBD
+#I modified the genepop file by adding sampling coordinates as the name of the 
+#last individual in each population. There is no coastline for these samples,
+# which each come from different islands. I just measured from Tahiti to Maupiti
+# It's 65 km from the tip of Tahiti Iti to Puna, so I added that to 
+# each coordinate.
+PSONMax=355 0
+#Neighborhood size is based on mean distance between populations = 75.78
+#355/75.78 = 4.684 so I will use 6 bins
+GeoBinNbr=6
+GeoUnit= ind.km
+#alternate way of specifying the habitat, not used for now
+#habitatPars= 0.5 0.5 400 1 0
+#habitatPars=0 0 0 300 0
+#Mutation Model is K-allele = PIM, with k=2 for SNPs. GivenK is number of alleles
+# at each locus (Daruanus.FP@loc.n.all)
+MutationModel=PIM
+GivenK=21,8,37,26,19,16,43,40
+samplingSpace=,,condS2
+samplingScale=,,logscale
+#Analysis - this will do 5 runs of 100 points and
+#overwrite those with 10 runs of 250 points
+writeSequence= Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide priors on Neu, Nem and g
+LowerBound=0.1,1,1
+Upperbound=4,10000,100000
+oneDimCI= All
+CoreNbrForR=4
+Plots= all1DProfiles
+#1DProfiles=2Nmu, 2Nm, Nb, condS2, g
+extrascale=Nb=logscale
+graphicFormat=pdf
+writeAdHocFiles=T

@@ -1,0 +1,38 @@
+Missing data from input file Daruanus_Fiji_1pop.txt.
+
+Possible four types of missing data at a locus:
+	1. Genotype contains only zeros or partially scored.
+	2. Genotype has less digits than normal one.
+	3. Genotype has more digits than normal one.
+	4. Genotype contains non-digit character.
+Types 3 and 4 stop the program.
+
+In the table, each row is for an individual with missing data
+(a) If column 'Locus' has only one number, then it is the first
+    locus with missing data and also of highest missing data type.
+(b) If column 'Locus' has 2 numbers, then the first number is
+    the first locus with data missing, and the second number is
+    the first locus that has highest missing data type.
+(c) Genotype column contains the genotype of the locus in case (a)
+    or the second locus in case (b).
+
+Population 1 [Suva_Suva1]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+      36            2           000000             1
+      40            2           000000             1
+      58            2           000000             1
+      69            2           000000             1
+     121            2           000000             1
+     122            2           000000             1
+     182            5           000000             1
+     193            2           000000             1
+     233            2           000000             1
+     235            6           000000             1
+     303            2           000000             1
+     318            2           000000             1
+     355            2           000000             1
+-----------------------------------------------------------
+Total missing data for population    1:           13
+

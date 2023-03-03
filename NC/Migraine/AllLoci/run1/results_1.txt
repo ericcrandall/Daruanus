@@ -1,0 +1,30 @@
+Migraine 0.6 (Built on Apr 14 2021 at 21:34:18)
+blackbox, version 1.1.32 loaded
+R code run on  Tue Feb 22 02:48:53 2022
+
+Data file: ../Daruanus_NC.txt
+Settings file: migraine.txt
+
+Geographic bin width= 25.5
+Demographic model: IBD 1D
+Canonical parameters: 2Nmu 2Nm g
+* N stands for number of gene copies, 
+    i.e. 2N = 4 x [the number of diploid individuals] *
+
+    Some high profile likelihoods are extrapolated in the 2Nmu, Nb profile
+
+*** Confidence intervals *** 
+
+95%-coverage confidence interval for 2Nmu : [ 1.095 -- 1.459 ]
+95%-coverage confidence interval for 2Nm : [ 556.3 -- 1927 ]
+95%-coverage confidence interval for Nb : [ 85687 -- 3724768455 ]
+(!) 1D CI computation on given combination of CI/kriging variables not implemented :  condS2
+
+*** Point estimates *** 
+
+   2Nmu    2Nm      g
+  1.265  839.7  0.706
+
+      Neighborhood: 421913 ind.km
+
+Normal ending.

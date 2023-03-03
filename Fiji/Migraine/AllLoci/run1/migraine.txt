@@ -1,0 +1,36 @@
+GenepopFileName=../Daruanus_Fiji.txt
+DemographicModel=LinearIBD
+#I modified the genepop file by adding sampling coordinates as the name of the 
+#last individual in each population. These coordinates were distances in km 
+#along the Viti Levu reef and coastline from Ovalu in the east to the Yasawas 
+#in the northwest: a total of ~414km. I measured all distances in Google Earth
+PSONMax=414 0
+#Neighborhood size is based on mean distance between populations = 46.66
+#414/46.66 = 8.87 so I will use 10 bins
+GeoBinNbr=10
+GeoUnit= ind.km
+#alternate way of specifying the habitat, not used for now
+#habitatPars= 0.5 0.5 400 1 0
+#habitatPars=0 0 0 300 0
+#Mutation Model is K-allele = PIM, with k=2 for SNPs. GivenK is number of alleles
+# at each locus (Daruanus.Fiji@loc.n.all)
+MutationModel=PIM
+GivenK=22,27,8,46,47,30,24,20,52,31,38
+samplingSpace=,,
+samplingScale=,,
+#Analysis - this will do 5 runs of 100 points and
+#overwrite those with 10 runs of 250 points
+writeSequence= Over,Over,Over,Over,Over,Append,10
+StatisticSequence=PAC
+PointNumber=100,100,100,100,100,250
+Nrunsperpoint=30,30,30,30,30,50
+#Wide priors on Neu, Nem and g
+LowerBound=0.1,1,0
+Upperbound=1,2500,1
+oneDimCI= 2Nmu, 2Nm, Nb, condS2
+CoreNbrForR=4
+#Plots= all1DProfiles
+1DProfiles=2Nmu, 2Nm, Nb, condS2, g
+extrascale=Nb=logscale
+graphicFormat=pdf
+writeAdHocFiles=T

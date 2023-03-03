@@ -1,0 +1,38 @@
+Output from NeEstimator v2.1
+Starting time: Wed Mar 16 23:04:06 2022
+Input File: "Daruanus_FP_10km.txt"
+
+Number of Loci = 8
+
+
+LINKAGE DISEQUILIBRIUM METHOD, Mating Model: Monogamy
+
+Lowest allele frequencies used:     0.0500    0.0400    0.0300    0.0200    0.0100
+Up to 17 rightmost characters are shown for Population name.
+-------------------------------------------------------------
+                   	         	      	             	            	         	          	         	    Parametric CI		    Jackknife CI
+Population [#:Name]	Samp Size	PCrit.	Weighted Mean	Ind. Alleles	    r^2  	  Exp(r^2)	     Ne  	       Low	      High	       Low	      High	  (Eff.df)
+1:Mo_Mo31-92       	    264  	0.0500	     264.0   	       996  	 0.003681	  0.003834	  -4382.5	    3437.3	  Infinite	    1225.6	  Infinite	       280
+                   	         	0.0400	     264.0   	      1260  	 0.003785	  0.003834	 -13647.8	    2513.0	  Infinite	    1608.4	  Infinite	       612
+                   	         	0.0300	     264.0   	      2044  	 0.003831	  0.003834	-231470.5	    2737.6	  Infinite	    1595.7	  Infinite	       748
+                   	         	0.0200	     264.0   	      2532  	 0.003804	  0.003834	 -22658.1	    3521.9	  Infinite	    2325.8	  Infinite	      1258
+                   	         	0.0100	     264.0   	      4260  	 0.003764	  0.003834	  -9543.0	    6998.6	  Infinite	    3618.6	  Infinite	      1862
+2:Puna_Puna1       	     25  	0.0500	      25.0   	       873  	 0.046720	  0.045184	    400.3	      96.7	  Infinite	      65.8	  Infinite	       369
+                   	         	0.0400	      25.0   	      1972  	 0.046074	  0.045184	    692.4	     156.0	  Infinite	     129.1	  Infinite	      1262
+                   	         	0.0300	      25.0   	      1972  	 0.046074	  0.045184	    692.4	     156.0	  Infinite	     129.1	  Infinite	      1262
+                   	         	0.0200	      25.0   	      3421  	 0.045698	  0.045184	   1199.8	     221.8	  Infinite	     166.1	  Infinite	      1778
+                   	         	0.0100	      25.0   	      3421  	 0.045698	  0.045184	   1199.8	     221.8	  Infinite	     166.1	  Infinite	      1778
+3:Tahaa_Tahaa1     	     36  	0.0500	      36.0   	      1175  	 0.034301	  0.030239	    161.4	      92.3	     457.5	      80.9	     911.5	       698
+                   	         	0.0400	      36.0   	      1502  	 0.034832	  0.030239	    142.4	      89.5	     296.2	      80.0	     417.6	       900
+                   	         	0.0300	      36.0   	      1502  	 0.034832	  0.030239	    142.4	      89.5	     296.2	      80.0	     417.6	       900
+                   	         	0.0200	      36.0   	      2525  	 0.032537	  0.030239	    287.4	     157.1	    1156.0	     127.8	  Infinite	      1169
+                   	         	0.0100	      36.0   	      4679  	 0.031937	  0.030239	    389.9	     217.1	    1504.8	     220.6	    1372.3	      5024
+4:TemTetia_Tem1    	    116  	0.0500	     116.0   	       960  	 0.009127	  0.008858	   2472.3	     579.9	  Infinite	     414.0	  Infinite	       444
+                   	         	0.0400	     116.0   	      1263  	 0.009079	  0.008858	   3003.8	     682.0	  Infinite	     642.6	  Infinite	      1095
+                   	         	0.0300	     116.0   	      1983  	 0.009171	  0.008858	   2128.0	     728.6	  Infinite	     499.9	  Infinite	       737
+                   	         	0.0200	     116.0   	      2602  	 0.009025	  0.008858	   3978.8	     979.6	  Infinite	     785.7	  Infinite	      1518
+                   	         	0.0100	     116.0   	      3964  	 0.009205	  0.008858	   1915.7	     866.9	  Infinite	     589.1	  Infinite	      1213
+
+Ending time: Wed Mar 16 23:04:06 2022
+-------------------------------------
+

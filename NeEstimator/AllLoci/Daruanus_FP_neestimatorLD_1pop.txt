@@ -1,0 +1,36 @@
+Output from NeEstimator v2.1
+Starting time: Fri Feb 25 13:37:35 2022
+Input File: "Daruanus_FP_1pop.txt"
+
+Number of Loci = 11
+
+LD mating model: Monogamy
+
+(Symbol "No S*" in Frequency means that NO Singleton Alleles are accepted.)
+
+Population     1 [Puna_Puna1]  (Number of Individuals = 441)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       No S*         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =      438.9       439.2       439.4       439.4       438.9       439.0
+Independent Comparisons =       1686        2410        3968        5598       27798       39383
+OverAll r^2 =                 0.002173    0.002295    0.002302    0.002294    0.002378    0.002447
+Expected r^2 Sample =         0.002294    0.002293    0.002292    0.002292    0.002295    0.002294
+Estimated Ne^ =               Infinite    267748.6     69180.3    268774.2      7955.8      4350.9
+
+95% CIs for Ne^
+* Parametric                   20389.2      4835.0      5825.9      7412.1      5382.0      3549.6
+                              Infinite    Infinite    Infinite    Infinite     14905.4      5585.0
+
+* JackKnife on Samples          6544.6      2114.7      4604.7      5050.6      3528.0      1912.2
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+**************************************************************************************************
+
+Ending time: Fri Feb 25 13:37:36 2022
+-------------------------------------
+

@@ -1,0 +1,24 @@
+Output from NeEstimator v2.1
+Starting time: Fri Feb 25 13:38:39 2022
+Input File: "Daruanus_Fiji_1pop.txt"
+
+Number of Loci = 11
+
+
+LINKAGE DISEQUILIBRIUM METHOD, Mating Model: Monogamy
+
+Lowest allele frequencies used:     0.0500    0.0400    0.0300    0.0200   "No S*"
+("No S*": No Singleton Allele is accepted)
+Up to 17 rightmost characters are shown for Population name.
+-------------------------------------------------------------
+                   	         	      	             	            	         	          	         	    Parametric CI		    Jackknife CI
+Population [#:Name]	Samp Size	PCrit.	Weighted Mean	Ind. Alleles	    r^2  	  Exp(r^2)	     Ne  	       Low	      High	       Low	      High	  (Eff.df)
+1:Suva_Suva1       	    358  	0.0500	     355.8   	      1624  	 0.002871	  0.002835	  18782.1	    2733.6	  Infinite	    2066.2	  Infinite	       889
+                   	         	0.0400	     355.4   	      2416  	 0.002812	  0.002838	 -25358.5	    4784.4	  Infinite	    2305.3	  Infinite	       718
+                   	         	0.0300	     355.5   	      3576  	 0.002812	  0.002838	 -26071.8	    6087.6	  Infinite	    3297.2	  Infinite	      1319
+                   	         	0.0200	     355.2   	      7143  	 0.002815	  0.002840	 -27423.9	    9472.9	  Infinite	    4283.3	  Infinite	      2067
+                   	         	 No S*	     355.5   	     38067  	 0.002834	  0.002837	-183642.8	   17984.2	  Infinite	    7064.3	  Infinite	      6767
+
+Ending time: Fri Feb 25 13:38:40 2022
+-------------------------------------
+

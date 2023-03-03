@@ -1,0 +1,65 @@
+################################################################################
+# Parmfile for Migrate 3.6.4 [do not remove these first TWO lines]# generated automatically on
+# Fri Feb 4 2022
+menu=NO
+nmlength=10
+datatype=Brownian
+weights=NO
+recover=NO
+fast-likelihood=NO
+inheritance-scalars={1.00000000000000000000}
+include-unknown=NO
+micro-threshold=10
+population-relabel={1 2 3 4}
+infile=../../Daruanus_All_8locus.mig
+random-seed=AUTO #OWN:410568459
+title= Dascyllus aruanus - South Pacific Archipelagos
+progress=YES
+logfile=YES:logfile.txt
+print-data=NO
+outfile=outfile.txt
+pdf-outfile=outfile.pdf
+pdf-terse=YES
+use-M=NO
+print-tree=NONE
+mig-histogram=MIGRATIONEVENTSONLY
+skyline=NO #needs mig-histogram=ALL:...
+mutation=CONSTANT
+custom-migration={
+*	*	0	0
+*	*	*	0
+0	*	*	*
+0	0	*	*
+}
+geo=NO
+bayes-posteriorbins= 1000 1000
+bayes-posteriormaxtype=TOTAL
+bayes-file=YES:bayesfile
+bayes-allfile=YES:bayesallfile
+bayes-all-posteriors=YES:bayesallposterior
+bayes-proposals= THETA METROPOLIS-HASTINGS Sampler
+bayes-proposals= MIG METROPOLIS-HASTINGS Sampler
+bayes-proposals= SPLITSTD METROPOLIS-HASTINGS Sampler
+bayes_proposals= SPLIT METROPOLIS-HASTINGS Sampler
+bayes-priors= THETA * * WEXPPRIOR: 0.0 0.1 1.000000 0.1000 
+bayes-priors= MIG * * UNIFORMPRIOR: 0 300 30
+divergence_distrib = E
+bayes-priors= SPLIT * * WEXPPRIOR: 0.0 0.01 1.000000 0.01000
+bayes-priors= SPLITSTD * * WEXPPRIOR: 0.0 0.01 1.000000 0.01000
+migration=PRIOR:10
+rate=PRIOR:50
+split=PRIOR:10
+splitstd=PRIOR:10
+bayes-hyperpriors=NO
+long-chains=1
+long-inc=100
+long-sample=10000
+burn-in=2000  
+auto-tune=YES:0.440000
+assign=NO
+heating=YES:1:{1.000000,1.500000,3.000000,1000000.000000}
+heated-swap=YES
+moving-steps=NO
+gelman-convergence=No
+replicate=YES:3
+end

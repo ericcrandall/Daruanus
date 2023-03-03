@@ -1,0 +1,23 @@
+Output from NeEstimator v2.1
+Starting time: Wed Mar 16 23:06:05 2022
+Input File: "Daruanus_FP_1pop.txt"
+
+Number of Loci = 8
+
+
+LINKAGE DISEQUILIBRIUM METHOD, Mating Model: Monogamy
+
+Lowest allele frequencies used:     0.0500    0.0400    0.0300    0.0200    0.0100
+Up to 17 rightmost characters are shown for Population name.
+-------------------------------------------------------------
+                   	         	      	             	            	         	          	         	    Parametric CI		    Jackknife CI
+Population [#:Name]	Samp Size	PCrit.	Weighted Mean	Ind. Alleles	    r^2  	  Exp(r^2)	     Ne  	       Low	      High	       Low	      High	  (Eff.df)
+1:Mo_Mo31-92       	    441  	0.0500	     441.0   	       916  	 0.002235	  0.002284	 -13661.4	    3898.1	  Infinite	    2705.6	  Infinite	       532
+                   	         	0.0400	     441.0   	      1261  	 0.002334	  0.002284	  13250.3	    2731.9	  Infinite	    2173.2	  Infinite	       747
+                   	         	0.0300	     441.0   	      2103  	 0.002346	  0.002284	  10809.8	    3169.6	  Infinite	    2742.1	  Infinite	      1440
+                   	         	0.0200	     441.0   	      2721  	 0.002290	  0.002284	 112564.4	    5023.1	  Infinite	    4088.7	  Infinite	      1806
+                   	         	0.0100	     441.0   	      4009  	 0.002341	  0.002284	  11772.6	    4098.4	  Infinite	    3467.6	  Infinite	      2496
+
+Ending time: Wed Mar 16 23:06:05 2022
+-------------------------------------
+

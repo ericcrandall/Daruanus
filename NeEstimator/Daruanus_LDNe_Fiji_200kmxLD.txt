@@ -1,0 +1,28 @@
+Output from NeEstimator v2.1
+Starting time: Wed Mar 16 21:28:22 2022
+Input File: "Daruanus_Fiji_200km.txt"
+
+Number of Loci = 8
+
+
+LINKAGE DISEQUILIBRIUM METHOD, Mating Model: Monogamy
+
+Lowest allele frequencies used:     0.0500    0.0400    0.0300    0.0200    0.0100
+Up to 17 rightmost characters are shown for Population name.
+-------------------------------------------------------------
+                   	         	      	             	            	         	          	         	    Parametric CI		    Jackknife CI
+Population [#:Name]	Samp Size	PCrit.	Weighted Mean	Ind. Alleles	    r^2  	  Exp(r^2)	     Ne  	       Low	      High	       Low	      High	  (Eff.df)
+1:east_Suva1       	    260  	0.0500	     259.7   	       958  	 0.003965	  0.003898	   9994.7	    1488.1	  Infinite	    1022.1	  Infinite	       436
+                   	         	0.0400	     259.7   	      1083  	 0.003971	  0.003898	   9090.0	    1546.7	  Infinite	    1341.3	  Infinite	       790
+                   	         	0.0300	     259.7   	      1661  	 0.003852	  0.003898	 -14368.8	    2900.7	  Infinite	    2054.3	  Infinite	       954
+                   	         	0.0200	     259.7   	      2985  	 0.003811	  0.003898	  -7709.0	    5819.8	  Infinite	    3596.5	  Infinite	      1677
+                   	         	0.0100	     259.7   	      5620  	 0.003865	  0.003898	 -20232.8	    5843.6	  Infinite	    3255.4	  Infinite	      2225
+2:west_Mata1       	     98  	0.0500	      98.0   	       879  	 0.011330	  0.010536	    837.3	     342.3	  Infinite	     206.4	  Infinite	       230
+                   	         	0.0400	      98.0   	      1216  	 0.010873	  0.010536	   1979.6	     528.5	  Infinite	     376.2	  Infinite	       540
+                   	         	0.0300	      98.0   	      1929  	 0.010994	  0.010536	   1452.5	     559.2	  Infinite	     376.8	  Infinite	       652
+                   	         	0.0200	      98.0   	      3166  	 0.010544	  0.010536	  91377.2	    1216.9	  Infinite	     779.0	  Infinite	      1342
+                   	         	0.0100	      98.0   	      7305  	 0.010941	  0.010536	   1644.9	     865.0	   11434.4	     633.9	  Infinite	      2428
+
+Ending time: Wed Mar 16 21:28:22 2022
+-------------------------------------
+

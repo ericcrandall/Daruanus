@@ -1,0 +1,80 @@
+Output from NeEstimator v2.1
+Starting time: Tue Mar 15 17:44:59 2022
+Input File: "Daruanus_NC_40km.txt"
+
+Number of Loci = 8
+
+LD mating model: Monogamy
+
+Population     1 [center_MBO1]  (Number of Individuals = 210)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       0.010         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =      209.8       209.8       209.8       209.7       209.6       209.6
+Independent Comparisons =        841        1310        2052        4586       12528       27012
+OverAll r^2 =                 0.005252    0.005082    0.005064    0.005084    0.005140    0.005028
+Expected r^2 Sample =         0.004839    0.004839    0.004840    0.004841    0.004843    0.004843
+Estimated Ne^ =                 1608.4      2735.9      2970.2      2735.1      2241.9      3591.3
+
+95% CIs for Ne^
+* Parametric                     695.8      1013.2      1211.7      1452.2      1559.7      2453.8
+                              Infinite    Infinite    Infinite     16004.4      3872.1      6548.8
+
+* JackKnife on Samples           574.5       577.5       638.3       869.4      1081.0      1573.0
+                              Infinite    Infinite    Infinite    Infinite    111758.1    Infinite
+
+**************************************************************************************************
+
+Population     2 [Tote_Tote1]  (Number of Individuals = 53)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       0.010         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =       53.0        53.0        53.0        53.0        53.0        53.0
+Independent Comparisons =        694        1126        2131        3833        8302       15681
+OverAll r^2 =                 0.019538    0.019840    0.020150    0.020282    0.019930    0.019976
+Expected r^2 Sample =         0.020004    0.020004    0.020004    0.020004    0.020004    0.020004
+Estimated Ne^ =               Infinite    Infinite      4534.8      2395.4    Infinite    Infinite
+
+95% CIs for Ne^
+* Parametric                     374.9       418.5       468.8       544.8      1215.8      1575.3
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+* JackKnife on Samples           237.8       201.0       222.4       409.5       814.6       795.8
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+**************************************************************************************************
+
+Population     3 [west_Mara1]  (Number of Individuals = 104)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       0.010         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =      104.0       104.0       104.0       104.0       104.0       104.0
+Independent Comparisons =        693        1315        2567        4580        9027       20624
+OverAll r^2 =                 0.010729    0.010264    0.009959    0.010163    0.010177    0.010119
+Expected r^2 Sample =         0.009910    0.009910    0.009910    0.009910    0.009910    0.009910
+Estimated Ne^ =                  811.5      1880.4     13618.4      2636.6      2496.9      3189.1
+
+95% CIs for Ne^
+* Parametric                     323.3       559.3      1077.6       974.7      1166.3      1635.1
+                              Infinite    Infinite    Infinite    Infinite    Infinite     40748.1
+
+* JackKnife on Samples           184.0       323.5       596.9       734.0       904.4       963.2
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+**************************************************************************************************
+
+Ending time: Tue Mar 15 17:45:00 2022
+-------------------------------------
+

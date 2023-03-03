@@ -1,0 +1,55 @@
+
+=============================================
+This is Migraine version 0.6 (Built on Apr 14 2021 at 21:34:18).
+Likelihood analysis of genetic data
+based on the de Iorio & Griffiths algorithms.
+=============================================
+Local operating system is Unix
+on a MacOs computer.
+with 4 core allocated for R analyses.
+=============================================
+Statistical model:
+Linear lattice with absorbing boundaries.
+Geometric dispersal model;
+Symmetric K-alleles mutation model
+   (theta parameter excludes k->k mutations).
+=============================================
+Algorithm:
+PAC-likelihood (Product of Approximate Conditional Likelihoods).
+=============================================
+Sample:
+Genepop file name: ../../Daruanus_NC.txt
+ (Write/Read ad hoc files? Write: true; Read: false)
+Number of loci as given by Genepop file (more info below)
+=============================================
+Parameter (Mutation rate, relative population sizes and dispersal rates) space explored:
+Mutation and dispersal rates scaled by deme size
+*** (Initial) parameter range *** (2 Nh u, 2 Nh m, *DispersedSigma2*
+lower bound: 0.1 1 1 
+upper bound: 4 10000 100000 
+=============================================
+Numerical options:
+Pi computation by iterative algorithm (PCG) if >=60 demes;
+Migraine computation and kriging (once).
+=============================================
+Kriging: 
+The blackbox R package will be used.
+Matern covariance family;
+         scale parameter(s) estimated by generalized cross-validation (GCV);
+         Matern smoothness parameter estimated by GCV
+=============================================
+Likelihood ratio test:
+Standard likelihood ratio profiles & LRT
+=============================================
+100 parameter points (first iteration)
+30,30,30,30,30,50 sampled tree(s) per locus 
+1 job(s) to run (multilocus sample(s) to analyse) on 1 processor(s)
+
+Min x, Min y, Max x, Max y of genotypes: 418 0 568.21 2.22507e-308
+Max distance between individuals and/or bounds: 612
+geoBinWidth: 24.48
+
+Bin numbers in each dimension: 26,1
+
+8 informative loci found
+

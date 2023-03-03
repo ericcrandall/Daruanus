@@ -1,0 +1,43 @@
+Archipelago,Estimate,Values
+New Caledonia,Mean sampling distance,25.080356778555384
+New Caledonia,Fst ~ Distance Slope,-8.7e-6
+New Caledonia,Ne Harmonic Mean,819.1966247387053
+New Caledonia,Effective Density,32.66287764451374
+New Caledonia,Theta,1.215
+New Caledonia,Nm,877.5
+New Caledonia,g,0.708
+New Caledonia,Neighborhood Size,429773
+New Caledonia,Neighborhood Size Low CI,82679
+New Caledonia,Neighborhood Size High CI,19676469111888848
+New Caledonia,Bin Width,24.48
+New Caledonia,sigma from slope,NA
+New Caledonia,sigma from NS,57.35381964377172
+New Caledonia,sigma from sigma2,22.144546383010166
+Fiji,Mean sampling distance,46.66166666666667
+Fiji,Fst ~ Distance Slope,-9e-7
+Fiji,Ne Harmonic Mean,2946.7570452420887
+Fiji,Effective Density,63.151560065194595
+Fiji,Theta,0.939
+Fiji,Nm,6787
+Fiji,g,4.92e-6
+Fiji,Neighborhood Size,421913
+Fiji,Neighborhood Size Low CI,115476
+Fiji,Neighborhood Size High CI,24675722
+Fiji,Bin Width,35.09
+Fiji,sigma from slope,NA
+Fiji,sigma from NS,40.868567567214896
+Fiji,sigma from sigma2,5.923725004813022
+Societies,Mean sampling distance,65.76541029430483
+Societies,Fst ~ Distance Slope,2e-6
+Societies,Ne Harmonic Mean,16141.453514350565
+Societies,Effective Density,245.43986636921184
+Societies,Theta,2.249
+Societies,Nm,1632
+Societies,g,0.403
+Societies,Neighborhood Size,372997
+Societies,Neighborhood Size Low CI,85587
+Societies,Neighborhood Size High CI,12844765235
+Societies,Bin Width,58
+Societies,sigma from slope,22.567448164535687
+Societies,sigma from NS,19.491718058942826
+Societies,sigma from sigma2,15.110140450191835

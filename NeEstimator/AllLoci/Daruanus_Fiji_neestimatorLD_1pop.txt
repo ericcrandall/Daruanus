@@ -1,0 +1,36 @@
+Output from NeEstimator v2.1
+Starting time: Fri Feb 25 13:38:39 2022
+Input File: "Daruanus_Fiji_1pop.txt"
+
+Number of Loci = 11
+
+LD mating model: Monogamy
+
+(Symbol "No S*" in Frequency means that NO Singleton Alleles are accepted.)
+
+Population     1 [Suva_Suva1]  (Number of Individuals = 358)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       No S*         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =      355.8       355.4       355.5       355.2       355.5       355.7
+Independent Comparisons =       1624        2416        3576        7143       38067       49824
+OverAll r^2 =                 0.002871    0.002812    0.002812    0.002815    0.002834    0.002830
+Expected r^2 Sample =         0.002835    0.002838    0.002838    0.002840    0.002837    0.002836
+Estimated Ne^ =                18782.1    Infinite    Infinite    Infinite    Infinite    Infinite
+
+95% CIs for Ne^
+* Parametric                    2733.6      4784.4      6087.6      9472.9     17984.2     22008.7
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+* JackKnife on Samples          2066.2      2305.3      3297.2      4283.3      7064.3      5679.6
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+**************************************************************************************************
+
+Ending time: Fri Feb 25 13:38:40 2022
+-------------------------------------
+

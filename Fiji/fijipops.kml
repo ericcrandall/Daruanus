@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document id="root_doc">
+<Schema name="Daruanus_samples" id="Daruanus_samples">
+	<SimpleField name="Region" type="string"></SimpleField>
+	<SimpleField name="Site" type="string"></SimpleField>
+	<SimpleField name="Abbr" type="string"></SimpleField>
+</Schema>
+<Folder><name>Daruanus_samples</name>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#Daruanus_samples">
+		<SimpleData name="Region">Fiji</SimpleData>
+		<SimpleData name="Site">Suva</SimpleData>
+		<SimpleData name="Abbr">Suva</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>178.425439,-18.169128</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#Daruanus_samples">
+		<SimpleData name="Region">Fiji</SimpleData>
+		<SimpleData name="Site">Muaivuso</SimpleData>
+		<SimpleData name="Abbr">Muaiv</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>178.352989,-18.148228</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#Daruanus_samples">
+		<SimpleData name="Region">Fiji</SimpleData>
+		<SimpleData name="Site">Yanuca</SimpleData>
+		<SimpleData name="Abbr">Yanu</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>177.95325,-18.272117</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#Daruanus_samples">
+		<SimpleData name="Region">Fiji</SimpleData>
+		<SimpleData name="Site">Tagage</SimpleData>
+		<SimpleData name="Abbr">Taga</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>177.658675,-18.200267</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#Daruanus_samples">
+		<SimpleData name="Region">Fiji</SimpleData>
+		<SimpleData name="Site">Nadi</SimpleData>
+		<SimpleData name="Abbr">Nadi</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>177.364758,-17.762522</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#Daruanus_samples">
+		<SimpleData name="Region">Fiji</SimpleData>
+		<SimpleData name="Site">Matacawalevu</SimpleData>
+		<SimpleData name="Abbr">Mata</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>177.324623,-16.97627</coordinates></Point>
+  </Placemark>
+  <Placemark>
+	<ExtendedData><SchemaData schemaUrl="#Daruanus_samples">
+		<SimpleData name="Region">Fiji</SimpleData>
+		<SimpleData name="Site">Tavewa</SimpleData>
+		<SimpleData name="Abbr">Tave</SimpleData>
+	</SchemaData></ExtendedData>
+      <Point><coordinates>177.366367,-16.926694</coordinates></Point>
+  </Placemark>
+</Folder>
+</Document></kml>

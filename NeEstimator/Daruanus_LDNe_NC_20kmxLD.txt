@@ -1,0 +1,38 @@
+Output from NeEstimator v2.1
+Starting time: Tue Mar 15 17:30:54 2022
+Input File: "Daruanus_NC_20km.txt"
+
+Number of Loci = 8
+
+
+LINKAGE DISEQUILIBRIUM METHOD, Mating Model: Monogamy
+
+Lowest allele frequencies used:     0.0500    0.0400    0.0300    0.0200    0.0100
+Up to 17 rightmost characters are shown for Population name.
+-------------------------------------------------------------
+                   	         	      	             	            	         	          	         	    Parametric CI		    Jackknife CI
+Population [#:Name]	Samp Size	PCrit.	Weighted Mean	Ind. Alleles	    r^2  	  Exp(r^2)	     Ne  	       Low	      High	       Low	      High	  (Eff.df)
+1:center_MBO1      	    210  	0.0500	     209.8   	       841  	 0.005252	  0.004839	   1608.4	     695.8	  Infinite	     574.5	  Infinite	       471
+                   	         	0.0400	     209.8   	      1310  	 0.005082	  0.004839	   2735.9	    1013.2	  Infinite	     577.5	  Infinite	       310
+                   	         	0.0300	     209.8   	      2052  	 0.005064	  0.004840	   2970.2	    1211.7	  Infinite	     638.3	  Infinite	       371
+                   	         	0.0200	     209.7   	      4586  	 0.005084	  0.004841	   2735.1	    1452.2	   16004.4	     869.4	  Infinite	       848
+                   	         	0.0100	     209.6   	     12528  	 0.005140	  0.004843	   2241.9	    1559.7	    3872.1	    1081.0	  111758.1	      2195
+2:Mara_Mara1       	     52  	0.0500	      52.0   	       883  	 0.019662	  0.020411	   -893.3	     542.6	  Infinite	     216.5	  Infinite	       270
+                   	         	0.0400	      52.0   	      1365  	 0.020635	  0.020411	   2971.1	     354.9	  Infinite	     175.0	  Infinite	       334
+                   	         	0.0300	      52.0   	      2382  	 0.020750	  0.020411	   1960.7	     421.8	  Infinite	     272.2	  Infinite	       879
+                   	         	0.0200	      52.0   	      4081  	 0.020336	  0.020411	  -8977.0	     793.1	  Infinite	     553.8	  Infinite	      2151
+                   	         	0.0100	      52.0   	      7152  	 0.020607	  0.020411	   3393.9	     747.4	  Infinite	     500.4	  Infinite	      2775
+3:Ten_Ten1         	     52  	0.0500	      52.0   	       766  	 0.021132	  0.020411	    921.7	     218.9	  Infinite	     163.4	  Infinite	       394
+                   	         	0.0400	      52.0   	      1128  	 0.021472	  0.020411	    625.6	     223.3	  Infinite	     163.0	  Infinite	       491
+                   	         	0.0300	      52.0   	      2124  	 0.020695	  0.020411	   2338.7	     417.1	  Infinite	     298.1	  Infinite	      1009
+                   	         	0.0200	      52.0   	      3724  	 0.020779	  0.020411	   1805.7	     492.7	  Infinite	     382.7	  Infinite	      1971
+                   	         	0.0100	      52.0   	      7258  	 0.020570	  0.020411	   4173.3	     785.6	  Infinite	     744.4	  Infinite	      6385
+4:Tote_Tote1       	     53  	0.0500	      53.0   	       694  	 0.019538	  0.020004	  -1435.9	     374.9	  Infinite	     237.8	  Infinite	       353
+                   	         	0.0400	      53.0   	      1126  	 0.019840	  0.020004	  -4070.2	     418.5	  Infinite	     201.0	  Infinite	       326
+                   	         	0.0300	      53.0   	      2131  	 0.020150	  0.020004	   4534.8	     468.8	  Infinite	     222.4	  Infinite	       480
+                   	         	0.0200	      53.0   	      3833  	 0.020282	  0.020004	   2395.4	     544.8	  Infinite	     409.5	  Infinite	      1940
+                   	         	0.0100	      53.0   	      8302  	 0.019930	  0.020004	  -9089.5	    1215.8	  Infinite	     814.6	  Infinite	      4124
+
+Ending time: Tue Mar 15 17:30:55 2022
+-------------------------------------
+

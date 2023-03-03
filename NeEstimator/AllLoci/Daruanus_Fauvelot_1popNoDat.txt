@@ -1,0 +1,75 @@
+Missing data from input file Daruanus_Fauvelot_1pop.gen.
+
+Possible four types of missing data at a locus:
+	1. Genotype contains only zeros or partially scored.
+	2. Genotype has less digits than normal one.
+	3. Genotype has more digits than normal one.
+	4. Genotype contains non-digit character.
+Types 3 and 4 stop the program.
+
+In the table, each row is for an individual with missing data
+(a) If column 'Locus' has only one number, then it is the first
+    locus with missing data and also of highest missing data type.
+(b) If column 'Locus' has 2 numbers, then the first number is
+    the first locus with data missing, and the second number is
+    the first locus that has highest missing data type.
+(c) Genotype column contains the genotype of the locus in case (a)
+    or the second locus in case (b).
+
+Population 1 [Mo31-92]
+-----------------------------------------------------------
+Individual       Locus         Genotype     Number of Loci
+                                          with missing data
+     220            2           000000             1
+     244            2           000000             1
+     253            2           000000             1
+     288            2           000000             1
+     293            2           000000             1
+     313            2           000000             1
+     320            2           000000             1
+     351            2           000000             1
+     364            2           000000             1
+     414            2           000000             1
+     431            2           000000             1
+     435            2           000000             1
+     463            2           000000             1
+     464            2           000000             1
+     484            2           000000             1
+     490            2           000000             1
+     493            2           000000             1
+     495            2           000000             1
+     496            2           000000             1
+     498            2           000000             1
+     502            2           000000             1
+     503            7           000000             1
+     506            2           000000             1
+     550            2           000000             1
+     554            2           000000             1
+     613            2           000000             1
+     643            5           000000             1
+     654            2           000000             1
+     672            2           000000             1
+     683            2           000000             1
+     748            2           000000             1
+     750            6           000000             1
+     786            2           000000             1
+     787            2           000000             1
+     832            2           000000             1
+     869            2           000000             1
+     889            5           000000             1
+     925            5           000000             1
+     946            5           000000             1
+     988            2           000000             1
+     993            5           000000             1
+    1010            5           000000             1
+    1027            2           000000             2
+    1241            9           000000             1
+    1259            5           000000             1
+    1260           10           000000             1
+    1277            5           000000             1
+    1307            5           000000             1
+    1322            5           000000             1
+    1357            5           000000             1
+-----------------------------------------------------------
+Total missing data for population    1:           51
+

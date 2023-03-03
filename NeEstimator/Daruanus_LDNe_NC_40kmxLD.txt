@@ -1,0 +1,33 @@
+Output from NeEstimator v2.1
+Starting time: Tue Mar 15 17:44:59 2022
+Input File: "Daruanus_NC_40km.txt"
+
+Number of Loci = 8
+
+
+LINKAGE DISEQUILIBRIUM METHOD, Mating Model: Monogamy
+
+Lowest allele frequencies used:     0.0500    0.0400    0.0300    0.0200    0.0100
+Up to 17 rightmost characters are shown for Population name.
+-------------------------------------------------------------
+                   	         	      	             	            	         	          	         	    Parametric CI		    Jackknife CI
+Population [#:Name]	Samp Size	PCrit.	Weighted Mean	Ind. Alleles	    r^2  	  Exp(r^2)	     Ne  	       Low	      High	       Low	      High	  (Eff.df)
+1:center_MBO1      	    210  	0.0500	     209.8   	       841  	 0.005252	  0.004839	   1608.4	     695.8	  Infinite	     574.5	  Infinite	       471
+                   	         	0.0400	     209.8   	      1310  	 0.005082	  0.004839	   2735.9	    1013.2	  Infinite	     577.5	  Infinite	       310
+                   	         	0.0300	     209.8   	      2052  	 0.005064	  0.004840	   2970.2	    1211.7	  Infinite	     638.3	  Infinite	       371
+                   	         	0.0200	     209.7   	      4586  	 0.005084	  0.004841	   2735.1	    1452.2	   16004.4	     869.4	  Infinite	       848
+                   	         	0.0100	     209.6   	     12528  	 0.005140	  0.004843	   2241.9	    1559.7	    3872.1	    1081.0	  111758.1	      2195
+2:Tote_Tote1       	     53  	0.0500	      53.0   	       694  	 0.019538	  0.020004	  -1435.9	     374.9	  Infinite	     237.8	  Infinite	       353
+                   	         	0.0400	      53.0   	      1126  	 0.019840	  0.020004	  -4070.2	     418.5	  Infinite	     201.0	  Infinite	       326
+                   	         	0.0300	      53.0   	      2131  	 0.020150	  0.020004	   4534.8	     468.8	  Infinite	     222.4	  Infinite	       480
+                   	         	0.0200	      53.0   	      3833  	 0.020282	  0.020004	   2395.4	     544.8	  Infinite	     409.5	  Infinite	      1940
+                   	         	0.0100	      53.0   	      8302  	 0.019930	  0.020004	  -9089.5	    1215.8	  Infinite	     814.6	  Infinite	      4124
+3:west_Mara1       	    104  	0.0500	     104.0   	       693  	 0.010729	  0.009910	    811.5	     323.3	  Infinite	     184.0	  Infinite	       165
+                   	         	0.0400	     104.0   	      1315  	 0.010264	  0.009910	   1880.4	     559.3	  Infinite	     323.5	  Infinite	       357
+                   	         	0.0300	     104.0   	      2567  	 0.009959	  0.009910	  13618.4	    1077.6	  Infinite	     596.9	  Infinite	       786
+                   	         	0.0200	     104.0   	      4580  	 0.010163	  0.009910	   2636.6	     974.7	  Infinite	     734.0	  Infinite	      2048
+                   	         	0.0100	     104.0   	      9027  	 0.010177	  0.009910	   2496.9	    1166.3	  Infinite	     904.4	  Infinite	      3885
+
+Ending time: Tue Mar 15 17:45:00 2022
+-------------------------------------
+

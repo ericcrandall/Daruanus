@@ -1,0 +1,36 @@
+Output from NeEstimator v2.1
+Starting time: Mon Feb 21 21:23:40 2022
+Input File: "Daruanus_Fauvelot_1pop.gen"
+
+Number of Loci = 11
+
+LD mating model: Monogamy
+
+(Symbol "No S*" in Frequency means that NO Singleton Alleles are accepted.)
+
+Population     1 [Mo31-92]  (Number of Individuals = 1358)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       No S*         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =     1349.3      1349.9      1349.0      1348.9      1348.2      1348.4
+Independent Comparisons =       1677        2289        4857        8589       69543       83798
+OverAll r^2 =                 0.001819    0.001686    0.001413    0.001219    0.000992    0.000946
+Expected r^2 Sample =         0.000743    0.000742    0.000743    0.000743    0.000743    0.000743
+Estimated Ne^ =                  616.8       704.1       991.9      1397.2      2674.0      3285.0
+
+95% CIs for Ne^
+* Parametric                     550.2       635.1       912.8      1295.5      2565.6      3143.4
+                                 692.5       782.0      1080.1      1510.5      2790.1      3437.6
+
+* JackKnife on Samples           465.8       617.7       736.3      1133.8      2297.5      2667.2
+                                 823.8       804.8      1373.8      1756.0      3161.8      4187.0
+
+**************************************************************************************************
+
+Ending time: Mon Feb 21 21:23:50 2022
+-------------------------------------
+

@@ -1,0 +1,57 @@
+Output from NeEstimator v2.1
+Starting time: Wed Mar 16 21:28:22 2022
+Input File: "Daruanus_Fiji_200km.txt"
+
+Number of Loci = 8
+
+LD mating model: Monogamy
+
+Population     1 [east_Suva1]  (Number of Individuals = 260)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       0.010         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =      259.7       259.7       259.7       259.7       259.7       259.7
+Independent Comparisons =        958        1083        1661        2985        5620       19761
+OverAll r^2 =                 0.003965    0.003971    0.003852    0.003811    0.003865    0.003863
+Expected r^2 Sample =         0.003898    0.003898    0.003898    0.003898    0.003898    0.003897
+Estimated Ne^ =                 9994.7      9090.0    Infinite    Infinite    Infinite    Infinite
+
+95% CIs for Ne^
+* Parametric                    1488.1      1546.7      2900.7      5819.8      5843.6     15478.3
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+* JackKnife on Samples          1022.1      1341.3      2054.3      3596.5      3255.4      2254.3
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+**************************************************************************************************
+
+Population     2 [west_Mata1]  (Number of Individuals = 98)
+****************
+--------------------------------------------------------------------------------------------------
+Lowest Allele Frequency Used     0.050       0.040       0.030       0.020       0.010         0+
+--------------------------------------------------------------------------------------------------
+
+LINKAGE DISEQUILIBRIUM METHOD
+
+Harmonic Mean Sample Size =       98.0        98.0        98.0        98.0        98.0        98.0
+Independent Comparisons =        879        1216        1929        3166        7305       12157
+OverAll r^2 =                 0.011330    0.010873    0.010994    0.010544    0.010941    0.010698
+Expected r^2 Sample =         0.010536    0.010536    0.010536    0.010536    0.010536    0.010536
+Estimated Ne^ =                  837.3      1979.6      1452.5     91377.2      1644.9      4112.6
+
+95% CIs for Ne^
+* Parametric                     342.3       528.5       559.2      1216.9       865.0      1525.9
+                              Infinite    Infinite    Infinite    Infinite     11434.4    Infinite
+
+* JackKnife on Samples           206.4       376.2       376.8       779.0       633.9       902.7
+                              Infinite    Infinite    Infinite    Infinite    Infinite    Infinite
+
+**************************************************************************************************
+
+Ending time: Wed Mar 16 21:28:22 2022
+-------------------------------------
+
