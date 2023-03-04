@@ -2440,8 +2440,10 @@ kernelplot_archipelagos	<-	ggplot(data.frame(x=c(0,250)),aes(x))	+
 I	also	want	to	measure	gene	flow	between	archipelagos	with	migrate-n	and	to	show	that	this	is	doable	for	the	proposal.
 
 ##	Setup
+
 Here's	the	parmfile	I	set	up
-```{bash	eval	=	F}
+```{bash}
+#| eval: false
 ################################################################################
 #	Parmfile	for	Migrate	3.6.4	[do	not	remove	these	first	TWO	lines]#	generated	automatically	on
 #	Fri	Feb	4	2022
@@ -2512,15 +2514,18 @@ end
 And	the	datafile	I	converted	from	the	8-locus	genpop	file	with	PGDSpider.	
 
 The	header	looks	like
-```{bash	eval	=	F}
+```{bash}
+#| eval: false
 4	8	.	D.	aruanus	dataset	lumped	by	archipelago	with	3	loci	removed	for	HWE	violation	-	EDC	3/28/2022
 #@M	2	3	2	2	2	2	2	2
 ```
 
 ##	Initial	Runs
-And	copied	up	to	Nautilus	and	ran	it	with:
 
-```{bash	eval	=	F}
+Copied	up	to	Nautilus	and	ran	it	with:
+
+```{bash}
+#| eval: false
 screen	-S	migrate_testrun
 
 mpirun	-np	32	~/migrate-4.4.4/src/migrate-n-mpi	parmfile
@@ -2534,7 +2539,8 @@ Tried	two	additional	models
 
 ###	Symmetric	Stepping	Stone
 
-```{bash	eval	=F}
+```{bash}
+#| eval: false
 custom-migration={
 *	S	0	0
 S	*	S	0
@@ -2544,7 +2550,8 @@ S	*	S	0
 ```
 
 ###	East	to	West	Stepping	Stone
-```{bash	eval	=F}
+```{bash}
+#| eval: false
 custom-migration={
 *	*	0	0
 0	*	*	0
@@ -2554,7 +2561,8 @@ custom-migration={
 ```
 
 ###	West	to	East	Stepping	Stone
-```{bash	eval=F}
+```{bash}
+#| eval: false
 custom-migration={
 *	0	0	0
 *	*	0	0
@@ -2566,7 +2574,8 @@ custom-migration={
 
 ###	Smaller	Priors
 
-```{bash	eval	=	F}
+```{bash}
+#| eval: false
 bayes-priors=	THETA	WEXPPRIOR:	0.0	0.01	1.000000	0.01000	
 bayes-priors=	MIG	WEXPPRIOR:	0.0100	100.000000	1000	10
 
@@ -2578,7 +2587,8 @@ This	definitely	improved	things.	Now	all	gene	flow	parameters	are	around	40!	But
 
 Now	I'm	going	to	add	divergence	with	gene	flow	(going	from	West	to	East).	Also	change	the	migration	parameters	to	uniform.
 
-```{	bash	eval	=F}
+```{bash}
+#| eval: false
 
 bayes-priors=	THETA	*	*	WEXPPRIOR:	0.0	0.01	1.000000	0.01000	
 bayes-priors=	MIG	*	*	UNIFORMPRIOR:	0	100	10
@@ -2595,7 +2605,8 @@ D							*							0							0
 
 After	[this	exchange](https://groups.google.com/g/migrate-support/c/49njPlwp62E/m/xzy4DkU9AwAJ)	with	Peter,	I	changed	the	priors	to	be	the	same	as	Theta.
 
-```{bash	eval	=F}
+```{bash}
+#| eval: false
 bayes-priors=	THETA	*	*	WEXPPRIOR:	0.0	0.01	1.000000	0.01000	
 bayes-priors=	MIG	*	*	UNIFORMPRIOR:	0	100	10
 divergence-distrib	=	S
@@ -2607,9 +2618,10 @@ Results	look	like	there	is	little	to	no	gene	flow	among	archipelagos
 
 ###	Divergence	without	gene	flow
 
-So	let's	look	at	a	model	of	no	gene	flow
+So	let's	look at	a	model	of no gene flow
 
-```{bash	eval	=	F}
+```{bash}
+#| eval: false
 
 custom-migration={
 *							0							0							0
@@ -2624,7 +2636,8 @@ d							*							0							0
 OK,	so	after	some	futzing	around	with	these	models,	I	am	now	trying	11	models	for	what	I	hope	will	be	a	publishable	analysis.
 
 All	built	on	this	parmfile
-```{bash	eval	=	F}
+```{bash}
+#| eval: false
 ################################################################################
 #	Parmfile	for	Migrate	3.6.4	[do	not	remove	these	first	TWO	lines]#	generated	automatically	on
 #	Fri	Feb	4	2022
@@ -2692,11 +2705,16 @@ replicate=NO
 end
 ```
 
-###	Asymmetric	Equilibrium	Gene	Flow
+### Models
+
+::: {.panel-tabset}
+
+####	Asymmetric	Equilibrium	Gene	Flow
 
 The	"standard"	stepping	stone	model.	Gene	flow	at	equilibrium	between	neighboring	archipelagos
 
-```{}
+```{bash}
+#| eval: false
 custom-migration={
 *	*	0	0	0
 *	*	*	0	0
@@ -2706,11 +2724,12 @@ custom-migration={
 }
 ```
 
-###	Symmetric	Equilibrium	Gene	Flow
+####	Symmetric	Equilibrium	Gene	Flow
 
 Same	as	above,	but	gene	flow	in	either	direction	is	symmetric	for	each	pair	of	archipelagos
 
-```{}
+```{bash}
+#| eval: false
 custom-migration={
 *	S	0	0	0
 S	*	S	0	0
@@ -2724,7 +2743,8 @@ S	*	S	0	0
 
 East	to	West	gene	flow	only.	Following	the	South	Equatorial	current
 
-```{}
+```{bash}
+#| eval: false
 custom-migration={
 *	*	0	0	0
 0	*	*	0	0
@@ -2738,7 +2758,8 @@ custom-migration={
 
 The	other	way...
 
-```{}
+```{bash}
+#| eval: false
 custom-migration={
 *	0	0	0	0
 *	*	0	0	0
@@ -2748,11 +2769,12 @@ custom-migration={
 }
 ```
 
-###	n-Island
+####	n-Island
 
 All	populations	the	same	size.	Gene	flow	between	all	populations	at	the	same	rate
 
-```{}
+```{bash}
+#| eval: false
 custom-migration={
 m	m	m	m	m
 m	m	m	m	m
@@ -2762,19 +2784,20 @@ m	m	m	m	m
 }
 ```
 
-###	Panmixia
+####	Panmixia
 
-```{}
+```{bash}
+#| eval: false
 custom-migration={
 *
 }
 
 ```
 
-###	East	to	West	Divergence	with	Gene	Flow
+####	East	to	West	Divergence	with	Gene	Flow
 
-```{}
-
+```{bash}
+#| eval: false
 custom-migration={
 *	D	0	0	0
 0	*	D	0	0
@@ -2784,9 +2807,10 @@ custom-migration={
 }
 ```
 
-###	West	to	East	Divergence	with	Gene	Flow
+####	West	to	East	Divergence	with	Gene	Flow
 
-```{}
+```{bash}
+#| eval: false
 custom-migration={
 *	0	0	0	0
 D	*	0	0	0
@@ -2797,9 +2821,10 @@ D	*	0	0	0
 
 ```
 
-###	East	to	West	Divergence	without	Gene	Flow
+####	East	to	West	Divergence	without	Gene	Flow
 
-```{}
+```{bash}
+#| eval: false
 custom-migration={
 *	d	0	0	0
 0	*	d	0	0
@@ -2809,11 +2834,12 @@ custom-migration={
 }
 ```
 
-###	West	to	East	Treemix
+####	West	to	East	Treemix
 
 Based on the treemix result above. Migration from the Societies to New Caledonia
 
-```{}
+```{bash}
+#| eval: false
 custom-migration={
 *	0	0	0	0
 d	*	0	*	0
@@ -2824,16 +2850,14 @@ d	*	0	*	0
 
 ```
 
-*	0	0	0	0
-*	*	0	0	0
-0	*	*	0	0
-0	0	*	*	0
-0	0	0	*	*
+:::
+
 ###	Run	It
 
 Copy	it	up	to	Nautilus,	make	10	replicate	folders.
 
-```{bash	eval	=	F}
+```{bash}
+#| eval: false
 scp	-r	./Models2	naut:./Daruanus2/rep1
 
 for	a	in	$(seq	2	5);	do	cp	-r	rep1	rep$a;	done
@@ -2844,7 +2868,8 @@ for	a	in	$(seq	2	5);	do	cp	-r	rep1	rep$a;	done
 So	we	will	do	10	replicates	of	3	replicates.		This	will	start	at	r1,	and	run	all	models	for	that	before	moving	on.	Pretty	sure	this	will	finish	one	whole	model	before	moving	on	to	the	next	one	(since	all	threads	are	being	used	for	different	loci)
 
 
-```{bash	eval	=	F}
+```{bash}
+#| eval: false
 #!
 for	r	in	*/
 	do
@@ -2869,7 +2894,7 @@ for	r	in	*/
 ####	Copy	It	Down
 
 ```{bash}
-#| eval: !expr F
+#| eval: false
 
 rsync	-av	-e	ssh	--exclude='bayes*'	--exclude="*.pdf"	--exclude="*.mig"	ecrandall@nautilus.psu.edu:~/daruanus/	output
 
@@ -2884,8 +2909,8 @@ Starting	material	for	this	one	is	from	the	Ptuberculosa_migrate.rmd
 
 ```{r}
 harvest.model.likelihoods	<-	function(workingDir	=	workingDir,
-																																						outfileName	=	"outfile.txt",
-																																						multilocus	=	T){
+																			outfileName	=	"outfile.txt",
+																		  multilocus	=	T){
 				#	this	function	harvests	model	marginal	likelihoods	for	models	calculated	by
 				#	the	program	migrate-n	(Beerli	&	Felsenstein	2001).
 				#	It	takes	as	input	a	directory	full	of	directories,	
@@ -2894,9 +2919,9 @@ harvest.model.likelihoods	<-	function(workingDir	=	workingDir,
 		
 				#initialize	a	data	frame	to	take	the	values
 				modelMarglikes	<-	data.frame(model=character(),
-																													thermodynamic=numeric(),
-																													bezier.corrected=numeric(),	
-																													harmonic=numeric())	
+																			thermodynamic=numeric(),
+																			bezier.corrected=numeric(),	
+																			harmonic=numeric())	
 				#	loop	through	directories	in	the	working	directory,	each	of	which	is	name
 				#	after	a	different	model
 		for(i	in	list.dirs(workingDir,	full.names	=	F)[-1]){	#i<-"stepping.stone"
@@ -3232,22 +3257,21 @@ posterior	<-	read_delim(file.path(winningModelDir,"bayesallfile"),
 posterior	<-	migrants.per.gen(posterior)
 
 #	posterior_long	<-	posterior	%>%	
-#																			pivot_longer(starts_with(c("Theta_",	"M_",	"Nm_","D_",	"d_")),
-#																																names_to	=	"parameter",	
-#																																values_to	=	"value")
+#										pivot_longer(starts_with(c("Theta_",	"M_",	"Nm_","D_",	"d_")),
+#																							names_to	=	"parameter",	
+#																							values_to	=	"value")
 #make	a	new	labeling	key
 posterior_parameters	<-	names(posterior)[str_which(names(posterior),
-																																																			paste(c("Theta_",	
-																																																											"xNm_","D_",	"S_"),	
-																																																									collapse	=	"|"))]
+                                                   paste(c("Theta_","xNm_","D_",	"S_"),
+                                                         collapse	=	"|"))]
 
 parameter_key	<-	posterior_parameters	%>%	
-																																		str_replace("(\\d)_(\\d)",	"\\1	to	\\2")	%>%
-																																		str_replace("D_",	"divergence	"	)	%>%	
-																																		str_replace("S_",	"divergenceSD	"	)	%>%	
-																																		str_replace("Theta_",	"theta	")	%>%	
-																																		str_replace_all(popkey$Pop)	%>%	
-																																		str_replace("xNm_",	"4Nem	")	
+									str_replace("(\\d)_(\\d)",	"\\1	to	\\2")	%>%
+								  str_replace("D_",	"divergence	"	)	%>%	
+								  str_replace("S_",	"divergenceSD	"	)	%>%	
+									str_replace("Theta_",	"theta	")	%>%	
+									str_replace_all(popkey$Pop)	%>%	
+									str_replace("xNm_",	"4Nem	")	
 																																		
 
 names(parameter_key)	<-	posterior_parameters
@@ -3259,10 +3283,10 @@ names(parameter_key)	<-	posterior_parameters
 
 ```{r}
 posterior.grouped	<-	posterior	%>%	
-																						select(all_of(c("Locus",
-																																								"Steps",
-																																								posterior_parameters)))	%>%	
-																						group_by(Locus)
+											select(all_of(c("Locus",
+																			"Steps",
+																			posterior_parameters)))	%>%	
+																			group_by(Locus)
 
 posterior.reps	<-	group_split(posterior.grouped)
 posterior.key	<-	group_keys(posterior.grouped)
@@ -3286,10 +3310,11 @@ And	here	I	run	the	code	for	the	$\theta$	estimates
 parameter_type	<-	"Theta"
 
 parameters	<-	names(posterior)	%>%
-																								str_subset(parameter_type)
+			          str_subset(parameter_type)
 
 parameter_key2	<-	parameters
-names(parameter_key2)	<-	parameter_key[names(parameter_key)	%in%	parameter_key2]
+names(parameter_key2)	<-	parameter_key[names(parameter_key)	%in%	
+                                         parameter_key2]
 
 #summarize	the	posterior	for	theta
 thetas	<-	summarize_posterior(posterior,	parameter_type	=	"Theta",	
@@ -3313,8 +3338,8 @@ ggplot(thetas_long,	aes(x	=	x,	y	=	Density,
 #	get	stats	for	each	summed-over-loci	posterior
 
 theta_stats	<-	parameter_key2	%>%	map_dfr(.f	=	~	posterior_stats(df	=	thetas,	
-																																																													parameter	=	.x),
-																																						.id	=	"parameter")
+																										parameter	=	.x),
+																										.id	=	"parameter")
 ```
 
 Need	to	check	convergence	for	these	things,	and	that	there	was	sufficient	burnin.
@@ -3324,20 +3349,19 @@ Need	to	check	convergence	for	these	things,	and	that	there	was	sufficient	burnin
 And	here	I	run	the	code	for	the	$m/\mu$	estimates
 
 ```{r}
-
-
 parameter_type	<-	"M"
 
 parameters	<-	names(posterior)	%>%
-																								str_subset(parameter_type)
+								str_subset(parameter_type)
 
 parameter_key2	<-	parameters
 names(parameter_key2)	<-	parameter_key[names(parameter_key)	%in%	
-																																									parameter_key2]
+																											parameter_key2]
 
 #summarize	the	posterior	for	theta
 mmu	<-	summarize_posterior(posterior_thetaf,	parameter_type	=	"M",	
-																														prior	=	mmu_prior,	quad_prec	=	T)
+																														prior	=	mmu_prior,	
+                           quad_prec	=	T)
 
 #convert	to	long	format
 mmu_long	<-	mmu	%>%	select(all_of(c("x","prior",parameters)))	%>%	
@@ -3351,13 +3375,13 @@ ggplot(mmu_long,	aes(x	=	x,	y	=	Density,
 																				color	=	Parameter))	+
 								geom_line(linewidth	=	0.5)	+	
 								#scale_x_log10(limits=c(1e6,1e7))
-								scale_color_discrete(type=nm.palette(12),	labels	=	parameter_key)+
+								scale_color_discrete(type=nm.palette(12),	
+								                     labels	=	parameter_key) +
 								xlim(7e6,7.5e6)
 #	get	stats	for	each	summed-over-loci	posterior
 
-mmu_stats	<-	parameter_key2	%>%	map_dfr(.f	=	~	posterior_stats(df	=	mmu,	
-																																																						parameter	=	.x),
-																																						.id	=	"parameter")
+mmu_stats	<-	parameter_key2	%>%	map_dfr(.f	=	~	posterior_stats(df	=	mmu,																																								parameter	=	.x),
+																												.id	=	"parameter")
 mmu_stats
 ```
 
@@ -3369,15 +3393,14 @@ And	here	I	run	the	code	for	the	`4Nm`	estimates
 
 parameter_type	<-	"Nm"
 
-parameters	<-	names(posterior)	%>%
-																								str_subset(parameter_type)
+parameters	<-	names(posterior)	%>% str_subset(parameter_type)
 
 parameter_key2	<-	parameters
 names(parameter_key2)	<-	parameter_key[names(parameter_key)	%in%	parameter_key2]
 
 #summarize	the	posterior	for	theta
 Nm	<-	summarize_posterior(posterior_thetaf,	parameter_type	=	"Nm",	
-																														prior	=	nm_prior_interpolated)
+																				prior	=	nm_prior_interpolated)
 
 #convert	to	long	format
 Nm_long	<-	Nm	%>%	select(all_of(c("x","prior",parameters)))	%>%	
@@ -3389,15 +3412,14 @@ nm.palette	<-	colorRampPalette(brewer.pal(9,"Spectral"))
 														
 #plot
 		ggplot(Nm_long,	aes(x	=	x,	y	=	Density,	
-																				color	=	Parameter))	+
+												color	=	Parameter))	+
 								geom_line(linewidth	=	0.5)	+	
 								scale_color_discrete(type=nm.palette(12),	labels	=	parameter_key)	+
 								xlim(0,30)
 #	get	stats	for	each	summed-over-loci	posterior
 
-nm_stats	<-	parameter_key2	%>%	map_dfr(.f	=	~	posterior_stats(df	=	Nm,	
-																																																													parameter	=	.x),
-																																						.id	=	"parameter")
+nm_stats	<-	parameter_key2	%>%	map_dfr(.f	=	~	posterior_stats(df	=	Nm,																																										parameter	=	.x),
+																													.id	=	"parameter")
 nm_stats
 ```
 
@@ -3416,7 +3438,7 @@ Here	is	code	to	convert	genepop	format	to	treemix	format:
 
 pops	<-	c("PNG","New	Caledonia","Fiji",	"Societies","Tuamotus")
 loci	<-	c("Locus_1","Locus_2","Locus_3","Locus_4","Locus_5","Locus_6",
-																																							"Locus_7","Locus_8")
+					  "Locus_7","Locus_8")
 
 Daruanus4pop	<-	read.genepop("Daruanus/Daruanus_All_8locus_5pops.gen",	
 																													ncode	=	3L)
@@ -3431,18 +3453,18 @@ popmatrix	<-	tibble(Daruanus4pop.gtypes@data)	%>%
 																								
 
 popsumlong	<-	popmatrix		%>%		summarize(mean	=	mean(allele,na.rm=T),	
-																																		var	=	var(allele,	na.rm=T),
-																																		n	=	n())
+																						var	=	var(allele,	na.rm=T),
+																											n	=	n())
 
 popsumwide	<-	popsumlong	%>%	pivot_wider(names_from	=	stratum,	
-																																								values_from	=	c(mean,var,n))
+																						values_from	=	c(mean,var,n))
 
 popsumwide	<-	popsumwide[,c("mean_PNG","var_PNG","n_PNG",
-																												"mean_New	Caledonia","var_New	Caledonia",
-																												"n_New	Caledonia",
-																												"mean_Fiji","var_Fiji","n_Fiji",
-																												"mean_Societies","var_Societies","n_Societies",
-																												"mean_Tuamotus","var_Tuamotus","n_Tuamotus")]
+															"mean_New	Caledonia","var_New	Caledonia",
+															"n_New	Caledonia",
+															"mean_Fiji","var_Fiji","n_Fiji",
+															"mean_Societies","var_Societies","n_Societies",
+														  "mean_Tuamotus","var_Tuamotus","n_Tuamotus")]
 
 #write_csv(popsumwide,"Daruanus/treemix/Daruanus_treemix.txt")
 
@@ -3463,7 +3485,7 @@ Installed	`Treemix`	on	Argonaute	via	Mamba.	Had	to	follow	[these](https://stacko
 I'm	first	going	to	try	a	variety	of	m	values	and	root	at	New	Caledonia	and	Tuamotus.
 
 ```{bash}
-#| eval: !expr F
+#| eval: false
 (base)	eric@Saraswati	~/github/IBD_Kernels/Daruanus/treemix$	treemix	-i	Daruanus_treemix.txt.gz	-o	PNG_0m	-micro	-root	PNG	-global																																																																																																																																																																					✖	✹	✭main	
 
 TreeMix	v.	1.13
@@ -3548,7 +3570,7 @@ plot_tree("Tua_6m")
 
 
 ```{bash}
-#| eval: !expr F
+#| eval: false
 setwd("5pops")
 for	m	in	{1..10};	do
 								#	Generate	random	seed
@@ -3566,7 +3588,7 @@ The	log	likelihood	reaches	a	plateau	of	-21.9889	at	6	migration	events
 Installed	according	to	instructions	given	[here](https://github.com/sriramlab/OrientAGraph)
 
 ```{bash}
-#| eval: !expr F
+#| eval: false
 					
 
 orientagraph	-i	../Daruanus_treemix.txt.gz	-o	PNG_0m_mlno	-micro	-root	PNG	-global	-m	0	-mlno
