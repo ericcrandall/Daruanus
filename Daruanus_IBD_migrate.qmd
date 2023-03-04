@@ -249,6 +249,8 @@ Based	on	the	OG	[@roussetGeneticDifferentiationEstimation1997]	estimator	from	sl
 
 ###	Calculate	distance	matrices
 
+#### Genetic Distances
+
 Weir	and	Cockerham's	Fst	and	other	basic	stats
 
 ```{r}
@@ -268,7 +270,11 @@ meanFis	<-	stats.NC$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	
 #	linearize
 fst.NC	<-	fst.NC/(1-fst.NC)
 
+```
 
+#### Geographic Distances
+
+```{r}
 #calculate	great	circle	distance
 gcdists_NC	<-	as.dist(pointDistance(NCpops[,5:4],	lonlat=T)/1000)
 attr(gcdists_NC,	"Labels")	<-	NCpops$Abbr
@@ -968,6 +974,8 @@ Based	on	the	OG	[@roussetGeneticDifferentiationEstimation1997]	estimator	from	sl
 
 ###	Calculate	distance	matrices
 
+#### Genetic Distances
+
 Weir	and	Cockerham's	Fst	and	other	basic	stats.		
 
 ```{r	FST_Fiji}
@@ -987,6 +995,7 @@ fst.Fiji	<-	fst.Fiji/(1-fst.Fiji)
 ```
 
 #####	Geographic	Distances
+
 Also,	given	the	circular	nature	of	Viti	Levu,	the	Euclidean	distances	measured	with	`pointDistance()`	are	going	to	be	short.	So	I	measured	distances	between	each	neighboring	locality	along	the	reef	in	Google	Earth,	as	given	in	`fijidistances`
 
 This	code	creates	a	kml	file	for	import	into	Google	Earth.	
@@ -1047,17 +1056,15 @@ mantelr	<-	round(mantelt$obs,	2)
 pvalue	<-	round(mantelt$pvalue,	5)
 
 lmodel_plot_Fiji	<-	ggplot(distances,aes(x=distance,y=fst))	+
-																geom_point()	+	geom_smooth(method=lm)	+	xlab("Geographic	Distance	(km)")	+	
+																geom_point()	+	geom_smooth(method=lm)	+	
+                                xlab("Geographic	Distance	(km)")	+	
 																ylab(expression(F["ST"]/1-F["ST"]))	+	
-																geom_text(label	=	paste("m	=",	round(slope_Fiji,8),	
-																																								";	Mantel	r	=",	mantelr,
-																																								",	p	=",	pvalue	),	
-																										mapping	=	aes(x	=	80,	y	=	-0.002))
+																geom_text(label	=	paste("m	=",	round(slope_Fiji,8),
+																												";	Mantel	r	=",	mantelr,
+																												",	p	=",	pvalue	),	
+																								mapping	=	aes(x	=	80,	y	=	-0.002))
 
 lmodel_plot_Fiji
-
-
-
 #ggsave("Fiji_IBD.pdf",	plot=lmodel_plot,device="pdf",	width=7,	height=5,units="in")
 
 ```
@@ -1089,7 +1096,10 @@ Let's	cluster	the	sites	by	UPGMA	(using	Euclidean	distances)
 plot(hclust(gcdists_Fiji,"average"))
 ```
 
+::: {.panel-tabset}
+
 ####	10km
+
 Let's	explore	Ne	and	Fis	when	lumping	populations...		First	lump	populations	that	are	less	than	10	km	apart
 
 ```{r}
@@ -1118,7 +1128,7 @@ Ne_hm_Fiji10km	<-	harm_mean(Ne_estimates_Fiji10km$Ne)
 ```
 
 ####	40km	
-Now	move	up	to	40	km
+
 ```{r}
 Daruanus.Fiji.40km	<-	Daruanus.Fiji
 
@@ -1146,7 +1156,6 @@ Ne_hm_Fiji40km	<-	harm_mean(Ne_estimates_Fiji40km$Ne)
 
 ####	100km
 
-Now	move	up	to	100	km
 ```{r}
 Daruanus.Fiji.100km	<-	Daruanus.Fiji
 
@@ -1157,7 +1166,9 @@ Daruanus.Fiji.100km@pop	<-		Daruanus.Fiji.100km@pop	%>%	fct_collapse(
 
 Daruanus.Fiji.100km.stats	<-	basic.stats(Daruanus.Fiji.100km)
 
-Daruanus.Fiji.100km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
+Daruanus.Fiji.100km.stats$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),
+                                                                   mean,	
+                                                                   na.rm=TRUE))
 
 #genind_to_genepop(Daruanus.Fiji.100km,output	=	"Fiji/Daruanus_Fiji_100km.txt")
 
@@ -1172,9 +1183,7 @@ Ne_hm_Fiji100km	<-	harm_mean(Ne_estimates_Fiji100km$Ne)
 
 ```
 
-
-####	300km
-300km	(all	pops	as	one)
+####	300km (all pops as one)
 
 ```{r}
 Ne_estimates_Fiji300km	<-	read_NeEstimator(file	=
@@ -1186,20 +1195,25 @@ Ne_estimates_Fiji300km	<-	WDFilter(Ne_estimates_Fiji300km,	10)
 Ne_hm_Fiji300km	<-	20000
 Ne_all_Fiji	<-	Ne_estimates_Fiji300km$Ne
 
-Ne_all_Fiji_CI	<-	c(Ne_estimates_Fiji300km$ParametricLow,Ne_estimates_Fiji300km$ParametricHigh)
+Ne_all_Fiji_CI	<-	c(Ne_estimates_Fiji300km$ParametricLow,
+                    Ne_estimates_Fiji300km$ParametricHigh)
 ```
 
 ####	Figure
 
 ```{r}
 fijiwindows	<-	tibble(SampleWindow	=	c(0,10,40,100,300),
-																						hm_Ne	=	c(Ne_hm_Fiji,Ne_hm_Fiji10km,Ne_hm_Fiji40km,Ne_hm_Fiji100km,
-																																Ne_hm_Fiji300km))
+																						hm_Ne	=
+                        c(Ne_hm_Fiji,Ne_hm_Fiji10km,Ne_hm_Fiji40km,
+                          Ne_hm_Fiji100km,Ne_hm_Fiji300km))
 
 ggplot(fijiwindows,	aes(x	=	SampleWindow,	y	=	hm_Ne))	+	geom_point()	+	
 		geom_line()	+	ylim(0,20000)	+	xlim(0,300)
 ggsave("Fiji_Ne_v_SampDistance.pdf",height	=	7,	width	=	7)
 ```
+
+:::
+
 ###	Calculate	Effective	Density
 
 ```{r}
@@ -1226,7 +1240,7 @@ $$
 
 So	now	let's	plug	that	into	the	first	equation!
 
-```{r	sigmafromSlope_Fiji}
+```{r}
 
 sigma_fromSlope_Fiji	<-	sqrt(1	/	(4*De_Fiji*slope_Fiji))
 
@@ -1243,10 +1257,12 @@ sigma_fromSlope_Fiji	<-	sqrt(1	/	(4*De_Fiji*slope_Fiji))
 
 ###	Running	MigraiNe
 
+::: {.panel-tabset}
+
 ####	First	Run
 
-```{bash	eval	=	F}
-
+```{bash}
+#| eval: false
 GenepopFileName=../Daruanus_Fiji.txt
 DemographicModel=	LinearIBD
 #I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
@@ -1285,15 +1301,14 @@ graphicFormat=pdf
 #writeAdHocFiles=T
 ```
 
-
 This	run	completed	in	147	minutes
 
 ####	Second	Run
 
 A	second	run	where	I	widen	the	prior	on	theta	and	Nm.
 
-```{bash	eval	=	F}
-
+```{bash}
+#| eval: false
 GenepopFileName=../Daruanus_Fiji.txt
 DemographicModel=LinearIBD
 #I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
@@ -1338,7 +1353,8 @@ This	result	finished	in	the	same	amount	of	time	and	with	very	similar	results	to
 
 Removing	3	loci	and	using	the	condS2	search	parameterization
 
-```{bash	eval=F}
+```{bash}
+#| eval: false
 GenepopFileName=../../Daruanus_Fiji.txt
 DemographicModel=LinearIBD
 #I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
@@ -1379,13 +1395,15 @@ writeAdHocFiles=T
 
 Finished	in	`r		6776/60`	minutes.
 
+:::
+
 ###	Create	Dispersal	Kernels
 
 This	got	me	the	following	estimates.	
 
 Output	from	run	2.
 
-```{r	migraine_parameters_Fiji}
+```{r}
 
 runDir	<-	"/Users/eric/github/IBD_Kernels/Daruanus/Fiji/Migraine/run3"
 result	<-	read_migraine(runDir)
@@ -1413,6 +1431,8 @@ Propagating	error	sorta	following	Pinsky	et	al.	table	S2
 
 ####	Error	in	Effective	Size
 
+::: {.panel-tabset}
+
 #####	For	Harmonic	Mean	Method
 
 ```{r	Ne_CI_Fiji}
@@ -1436,13 +1456,14 @@ ggplot(data	=	tibble(Ne_error_Fiji),	aes(x=Ne_error_Fiji))	+	geom_density()
 
 Can't	do	the	whole	sample	method,	because	Ne	estimate	is	"infinite"
 
+:::
 
 ####	Error	in	Effective	Density
 
 Will	model	the	error	in	`meandist`	as	well...
 
 
-```{r	De_CI_Fiji}
+```{r}
 
 De_error_Fiji	<-	Ne_error_Fiji/	rnormTrunc(100000,mean=meandists_Fiji,
 																																											sd	=	meandists_Fiji/1.96,	min	=	1e-10)
@@ -1451,7 +1472,7 @@ De_error_Fiji	<-	Ne_error_Fiji/	rnormTrunc(100000,mean=meandists_Fiji,
 
 ####	Error	in	Slope
 
-```{r	Fiji_slope_error}
+```{r}
 
 slope_se_Fiji	<-	summary(lmodel_Fiji)$coefficients[2,2]
 
@@ -1476,13 +1497,13 @@ Using	a	uniform	distribution	is	out	because	there	is	clearly	a	peaked	distributi
 
 ![Migraine_Run2_Neighborhood_Theta](figures/Da_Fiji_Neighborhood.jpg)
 
-```{r	New	Neighborhood	Size	Error	Fiji	}
+```{r}
 NSCI_Fiji
 qlnorm(c(0.025,0.975),meanlog	=	log(NS_Fiji),	sdlog	=	log(18.89))
 ```
 
 
-```{r	New	Neighborhood	Size	Error_Fiji	}
+```{r}
 
 Neighborhood_error_Fiji	<-	rlnormTrunc(n	=	100000,	meanlog	=	log(NS_Fiji),	
 																																					sdlog	=	log(18.89),	min	=	NSCI_Fiji[1],	max	=	NSCI_Fiji[2])
@@ -1507,25 +1528,27 @@ ggplot(data	=	tibble(sigma_error_fromNS_Fiji),
 
 kernelplot_Fiji	<-	ggplot(data.frame(x=c(0,100)),aes(x))	+
 		map(.x	=	sample(sigma_error_fromNS_Fiji,1000),	.f	=	function(sigma){
-																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
-																																												colour	=	"lightblue",
-																																												linetype=1,size=0.1,alpha	=	0.2)	})	+
+												stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																			colour	=	"lightblue",
+																			linetype=1,size=0.1,alpha	=	0.2)	})	+
 		map(.x	=	sample(sigma_error_fromSlope_Fiji,1000),	.f	=	function(sigma){
-																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
-																																												colour	=	"lightgreen",
-																																												linetype=1,size=0.1,alpha	=	0.2)	})	+
-		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_Fiji),	linetype=2,
-																														aes(color="IBD_Slope"),	show.legend	=	T)	+
-		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromsigma2_Fiji),	linetype=2,
-																														aes(color="Migraine_Sigma2"),	show.legend	=	T)	+
-		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_Fiji),	linetype=2,
-																														aes(color="Migraine_Neighborhood_Size"),	show.legend	=	T)	+
-		xlab("Alongshore	Distance	(km)")	+	ylab("Dispersal	probability	density")	+
-		scale_color_manual("Kernel",values	=	
+									stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+											          colour	=	"lightgreen",
+		        										linetype=1,size=0.1,alpha	=	0.2)	})	+
+		              stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_Fiji),	
+		                            linetype=2,aes(color="IBD_Slope"),show.legend	=	T)	+
+		              stat_function(fun=dexp,args=list(rate	=	1/sigma_fromsigma2_Fiji),	
+		                            linetype=2,aes(color="Migraine_Sigma2"),	
+		                            show.legend	=	T)	+
+		              stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_Fiji),	
+		                            linetype=2,aes(color="Migraine_Neighborhood_Size"),	
+		                            show.legend	=	T)	+ 
+                                xlab("Alongshore	Distance	(km)") +
+                                ylab("Dispersal	probability	density")	+
+		                            scale_color_manual("Kernel",values	=	
 																				c(Migraine_Sigma2="darkblue",	
 																				Migraine_Neighborhood_Size	="blue",
-																				IBD_Slope	=	"green"))	+
-		ylim(0,0.05)
+																				IBD_Slope	=	"green"))	+ ylim(0,0.05)
 
 
 kernelplot_Fiji
@@ -1541,6 +1564,8 @@ The	reason	that	the	error	is	generally	smaller	than	the	estimate	is	because	the	
 Based	on	the	OG	[@roussetGeneticDifferentiationEstimation1997]	estimator	from	slope	of	the	IBD	regression.
 
 ###	Calculate	distance	matrices
+
+#### Genetic Distances
 
 Weir	and	Cockerham's	Fst	and	other	basic	stats.		
 
@@ -1630,16 +1655,14 @@ mantelr	<-	round(mantelt$obs,	2)
 pvalue	<-	round(mantelt$pvalue,	5)
 
 lmodel_plot_FP	<-	ggplot(distances,aes(x=distance,y=fst))	+
-																geom_point()	+	geom_smooth(method=lm)	+	xlab("Geographic	Distance	(km)")	+	
-																ylab(expression(F["ST"]/1-F["ST"]))	+	
-																geom_text(label	=	paste("m	=",	slope_FP,	
-																																								";	Mantel	r	=",	mantelr,
-																																								",	p	=",	pvalue	),	
-																										mapping	=	aes(x	=	80,	y	=	-0.002))
+										geom_point()	+	geom_smooth(method=lm)	+	
+                    xlab("Geographic	Distance	(km)")	+	
+										ylab(expression(F["ST"]/1-F["ST"]))	+	
+										geom_text(label	=	paste("m	=",	slope_FP,	";	Mantel	r	=",	
+										                        mantelr,",	p	=",	pvalue	),	
+																					  mapping	=	aes(x	=	80,	y	=	-0.002))
 
 lmodel_plot_FP
-
-
 
 #ggsave("FP_IBD.pdf",	plot=lmodel_plot,device="pdf",	width=7,	height=5,units="in")
 
@@ -1653,10 +1676,8 @@ E	voila,	c'est	positive!	But	not	significantly	so.
 Pull	out	just	the	relevant	FP	estimates	of	Ne.	The	negative	numbers	reflect	very	high	values	of	Ne!
 
 ```{r}
-
 Ne_estimates_FP	<-	Ne_estimates_f	%>%	filter(Population	%in%	FPpops$Abbr)
 
-#
 Ne_estimates_FP[,c(1:4,8,11,12)]
 
 #	harmonic	mean	of	Ne,	following	Waples	and	Do	2010
@@ -1670,8 +1691,9 @@ Let's	cluster	the	sites	by	UPGMA	(using	Euclidean	distances)
 plot(hclust(pcdists_FP,"average"))
 ```
 
+::: {.panel-tabset}
+
 ####	10km
-Let's	explore	Ne	and	Fis	when	lumping	populations...		First	lump	populations	that	are	less	than	10	km	apart
 
 ```{r}
 stats.FP$Fis	%>%	as_tibble()	%>%	summarize(across(everything(),mean,	na.rm=TRUE))
@@ -1732,7 +1754,7 @@ Ne_hm_FP20km	<-	harm_mean(Ne_estimates_FP20km$Ne)
 ```
 
 ####	40km	
-Now	move	up	to	40	km
+
 ```{r}
 Daruanus.FP.40km	<-	Daruanus.FP
 
@@ -1759,9 +1781,7 @@ Ne_hm_FP40km	<-	harm_mean(Ne_estimates_FP40km$Ne)
 
 ```
 
-####	300km
-
-300km	(all	pops	as	one)
+####	300km (all pops as one)
 
 ```{r}
 Ne_estimates_FP300km	<-	read_NeEstimator(file	=
@@ -1780,12 +1800,15 @@ Ne_all_FP_CI	<-	c(Ne_estimates_FP300km$ParametricLow,20000)
 
 ```{r}
 FPwindows	<-	tibble(SampleWindow	=	c(0,10,40,300),
-																						hm_Ne	=	c(Ne_hm_FP,Ne_hm_FP10km,Ne_hm_FP40km,Ne_hm_FP300km))
+								hm_Ne	=	c(Ne_hm_FP,Ne_hm_FP10km,Ne_hm_FP40km,Ne_hm_FP300km))
 
-FPNevDistance	<-	ggplot(FPwindows,	aes(x	=	SampleWindow,	y	=	hm_Ne))	+	geom_point()	+	geom_line()	+	ylim(0,20000)	+	xlim(0,300)
+FPNevDistance	<-	ggplot(FPwindows,	aes(x	=	SampleWindow,	y	=	hm_Ne))	+	
+                  geom_point()	+	geom_line()	+	ylim(0,20000)	+	xlim(0,300)
 FPNevDistance
 #ggsave("FP_Ne_v_SampDistance.pdf",	height	=	7,	width	=	7)
 ```
+
+:::
 
 ###	Calculate	Effective	Density
 
@@ -1815,7 +1838,7 @@ $$
 
 So	now	let's	plug	that	into	the	first	equation!
 
-```{r	sigma}
+```{r}
 
 sigma_fromSlope_FP	<-	sqrt(1	/	(4*De_FP*slope_FP))
 
@@ -1828,6 +1851,8 @@ So	effective	density	is	`r	signif(De_FP,4)`	individuals	per	km,	and	$\sigma$	is	
 ##	MigraiNe	Method
 
 ###	Running	MigraiNe
+
+::: {.panel-tabset}
 
 ####	First	Run
 
@@ -1842,7 +1867,8 @@ distfromP1_FP+65
 ```
 
 
-```{bash	eval	=	F}
+```{bash}
+#| eval: false
 GenepopFileName=../Daruanus_FP.txt
 DemographicModel=	LinearIBD
 #I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
@@ -1891,6 +1917,7 @@ Widened	the	prior	on	theta	because	the	first	two	runs	were	over
 
 
 ```{bash}
+#| eval: false
 GenepopFileName=../Daruanus_FP.txt
 DemographicModel=	LinearIBD
 #I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
@@ -1938,6 +1965,7 @@ graphicFormat=pdf
 Removed	3	loci,	used	condS2	parameterization
 
 ```{bash	eval	=F}
+#| eval: false
 GenepopFileName=../../Daruanus_FP.txt
 DemographicModel=	LinearIBD
 #I	modified	the	genepop	file	by	adding	sampling	coordinates	as	the	name	of	the	
@@ -1979,6 +2007,8 @@ writeAdHocFiles=T
 
 Finished	in	`r	3387/60`	minutes.
 
+:::
+
 ###	Create	Dispersal	Kernels
 
 ####	Sigma	estimates
@@ -2016,6 +2046,8 @@ The	$\sigma$	we	get	from	$F_{ST}$	~	Distance	is	`r	sigma_fromSlope_FP`,	and	from
 Propagating	error	sorta	following	Pinsky	et	al.	table	S2
 
 ####	Error	in	Ne
+
+::: {.panel-tabset}
 
 #####	For	Harmonic	Mean	Method
 
@@ -2064,6 +2096,9 @@ ggplot(data	=	tibble(Ne_error_all_FP),	aes(x=Ne_error_all_FP))	+
 		geom_density()	+	xlim(0,30000)
 																																
 ```
+
+:::
+
 ####	Error	in	Effective	Density
 
 ```{r	Ne_CI_FP}
@@ -2147,31 +2182,35 @@ ggplot(data	=	tibble(sigma_error_fromNS_FP),
 
 kernelplot_FP	<-	ggplot(data.frame(x=c(0,100)),aes(x))	+	
 		map(.x	=	sample(sigma_error_fromNS_FP,1000),	.f	=	function(sigma){
-																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
-																																												colour	=	"lightblue",
-																																												linetype=1,size=0.1,alpha	=	0.2)	})	+
-				map(.x	=	sample(sigma_error_fromSlope_FP,1000),	.f	=	function(sigma){
-																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
-																																												colour	=	"lightgreen",
-																																												linetype=1,size=0.1,alpha	=	0.2)	})	+
-		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_FP),	linetype=2,
-																														aes(color="IBD_Slope"),	show.legend	=	T)	+
-		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_all_FP),	linetype=2,
-																														aes(color="IBD_Slope_1pop"),	show.legend	=	T)	+
-		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromsigma2_FP),	linetype=2,
-																														aes(color="Migraine_Sigma2"),	show.legend	=	T)	+
-		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_FP),	linetype=2,
-																														aes(color="Migraine_Neighborhood_Size"),	show.legend	=	T)	+
-		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_all_FP),	linetype=2,
-																														aes(color="Migraine_Neighborhood_Size_1pop"),	show.legend	=	T)	+
-		xlab("Alongshore	Distance	(km)")	+	ylab("Dispersal	probability	density")	+
-		scale_color_manual("Kernel",values	=	
+				stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+											colour	=	"lightblue",																																							linetype=1,size=0.1,alpha	=	0.2)	})	+
+				map(.x	=	sample(sigma_error_fromSlope_FP,1000),	
+				    .f	=	function(sigma){
+									stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																colour	=	"lightgreen",																																							linetype=1,size=0.1,alpha	=	0.2)	})	+
+		    stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_FP),	linetype=2,
+																				aes(color="IBD_Slope"),	show.legend	=	T)	+
+		    stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_all_FP),	linetype=2,
+																														aes(color="IBD_Slope_1pop"),
+		                                                        show.legend	=	T)	+
+		    stat_function(fun=dexp,args=list(rate	=	1/sigma_fromsigma2_FP),	linetype=2,
+																														aes(color="Migraine_Sigma2"), 
+		                                                        show.legend	=	T)	+
+		    stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_FP),	linetype=2,
+																											aes(color="Migraine_Neighborhood_Size"), 
+		                                                  show.legend	=	T)	+
+		    stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_all_FP),	linetype=2,
+																											aes(color="Migraine_Neighborhood_Size_1pop"),
+		                                                  show.legend	=	T)	+
+		    xlab("Alongshore	Distance	(km)")	+	
+        ylab("Dispersal	probability	density")	+
+		    scale_color_manual("Kernel",values	=	
 																				c(IBD_Slope	=	"green",
-																						IBD_Slope_1pop	=	"darkgreen",
-																						Migraine_Sigma2="darkblue",	
-																				Migraine_Neighborhood_Size	="blue",
-																				Migraine_Neighborhood_Size_1pop	=	"cyan4"))	+
-		ylim(0,0.1)
+																					IBD_Slope_1pop	=	"darkgreen",
+																					Migraine_Sigma2="darkblue",	
+																				  Migraine_Neighborhood_Size	="blue",
+																				  Migraine_Neighborhood_Size_1pop	=	"cyan4"))	+
+		    ylim(0,0.1)
 
 
 kernelplot_FP
@@ -2345,14 +2384,17 @@ errors.p	<-	enframe(c(`New	Caledonia`	=	sigma_error_fromNS_NC,
 
 #create	a	tibble	with	the	point	estimates	of	interest
 point_estimates	<-	across.archipelagos.df	%>%		select("Archipelago","sigma	from	slope")	%>%	
-		mutate(`sigma	from	slope`	=	replace(`sigma	from	slope`,2,across.archipelagos.df$`sigma	from	NS`[2]))	
+		mutate(`sigma	from	slope`	=	replace(`sigma	from	slope`,2,
+		                                    across.archipelagos.df$`sigma	from	NS`[2]))	
 
 
 violins.p	<-	errors.p	%>%	remove_missing()	%>%	
-		mutate(Archipelago	=	factor(Archipelago,levels	=	c("New	Caledonia","Fiji","Societies")))	%>%	
+		mutate(Archipelago	=	factor(Archipelago,levels	=	c("New	Caledonia",
+		                                                   "Fiji","Societies")))	%>%	
 		ggplot()	+	geom_violin(mapping	=	aes(x	=	Archipelago,	y	=	Sigma))	+	
-	geom_point(data	=	point_estimates,	
-													mapping	=	aes(x	=	Archipelago,	y	=	`sigma	from	slope`),	color	=	"grey",	size	=	5)	+
+	  geom_point(data	=	point_estimates,	
+													mapping	=	aes(x	=	Archipelago,	y	=	`sigma	from	slope`),	
+													color	=	"grey",	size	=	5)	+
 		ylim(0,1000)	+
 				coord_cartesian(ylim	=	c(1,	1000))	+	
 		scale_y_log10()
@@ -2363,23 +2405,25 @@ ggsave("Daruanus_archipelagos_violins.pdf",violins.p)
 
 kernelplot_archipelagos	<-	ggplot(data.frame(x=c(0,250)),aes(x))	+	
 		map(.x	=	sample(sigma_error_fromNS_NC,500),	.f	=	function(sigma){
-																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
-																																												colour	=	"palevioletred",
-																																												linetype=1,size=0.1,alpha	=	0.1)	})	+
-	map(.x	=	sample(sigma_error_fromSlope_Fiji,500),	.f	=	function(sigma){
-																													stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
-																																											colour	=	"goldenrod",
-																																											linetype=1,size=0.1,alpha	=	0.1)	})	+
-	map(.x	=	sample(sigma_error_fromSlope_FP,500),	.f	=	function(sigma){
-																														stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
-																																												colour	=	"lightblue",
-																																												linetype=1,size=0.1,alpha	=	0.1)	})	+
+										stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																  colour	=	"palevioletred",
+																  linetype=1,size=0.1,alpha	=	0.1)	})	+
+	  map(.x	=	sample(sigma_error_fromSlope_Fiji,500),	.f	=	function(sigma){
+																  stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+																 colour	=	"goldenrod",	
+																 linetype=1,size=0.1,alpha	=	0.1)	})	+
+	  map(.x	=	sample(sigma_error_fromSlope_FP,500),	.f	=	function(sigma){
+																stat_function(fun	=	dexp,	args	=	list(rate	=	1/sigma),
+															  colour	=	"lightblue",
+															  linetype=1,size=0.1,alpha	=	0.1)	})	+
 		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromNS_NC),	linetype=1,
-																														aes(color="New	Caledonia"),	show.legend	=	T)	+
+																aes(color="New	Caledonia"),	show.legend	=	T)	+
 		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_Fiji),	linetype=1,
-																														aes(color="Fiji"),	show.legend	=	T)	+
+																														aes(color="Fiji"),	
+		                                                        show.legend	=	T)	+
 		stat_function(fun=dexp,args=list(rate	=	1/sigma_fromSlope_FP),	linetype=1,
-																														aes(color="Societies"),	show.legend	=	T)	+
+																														aes(color="Societies"),	
+		                                                    show.legend	=	T)	+
 		xlab("Alongshore	Distance	(km)")	+	ylab("Dispersal	probability	density")	+
 		scale_color_manual("Archipelago",values	=	
 																				c(`New	Caledonia`	=	"red",
