@@ -2858,9 +2858,9 @@ Copy	it	up	to	Nautilus,	make	10	replicate	folders.
 
 ```{bash}
 #| eval: false
-scp	-r	./Models2	naut:./Daruanus2/rep1
+scp	-r	./migrate/Models2	naut:./Daruanus3/rep1
 
-for	a	in	$(seq	2	5);	do	cp	-r	rep1	rep$a;	done
+for a in $(seq 2 5); do cp -r rep1 rep$a; done
 ```
 
 ####	Bash	Script
@@ -2870,25 +2870,29 @@ So	we	will	do	10	replicates	of	3	replicates.		This	will	start	at	r1,	and	run	all
 
 ```{bash}
 #| eval: false
+### Bash Script
 #!
-for	r	in	*/
-	do
-		cd	$r
-		echo	$r
-		date
-		date	>	date.txt
-			for	m	in	*/
-					do
-				cd	$m
-						date	>	date.txt
-						echo	$m
-						date
-						mpirun	-np	32	~/eric_data/migrate-4.4.4/src/migrate-n-mpi	parmfile
-						sleep	1
-				cd	..
-					done
-		cd	..
-	done
+for r in */
+        do
+        echo starting $r at $(date )>> progress.txt
+                cd $r
+                echo $r
+                date
+                date > progress.txt
+                        for m in */
+                          do
+                          echo starting $m at $(date )>> progress.txt
+                                cd $m
+                                  date > date.txt
+                                  echo $m
+                                  date
+                                  mpirun --use-hwthread-cpus -np 120 ~/migrate-4.4.4/src/migrate-n-mpi parmfile
+                                  sleep 1
+                                cd ..
+                          done
+                cd ..
+        done
+
 ```
 
 ####	Copy	It	Down
@@ -2931,9 +2935,9 @@ harvest.model.likelihoods	<-	function(workingDir	=	workingDir,
 						outfile<-scan(file=file.path(modelDir,outfileName),
 																				what="character",sep="\n")	
 				#find	the	line	with	the	likelihoods	on	it	and	split	on	runs	of	spaces
-						marglikeline	<-	grep("Scaling	factor",outfile,value=F)-1
+						marglikeline	<-	str_which(outfile,"Scaling factor")-1
 						marglikeline	<-	strsplit(outfile[marglikeline],
-																															"\\s+",	perl	=	T)[[1]][3:5]
+															"\\s+",	perl	=	T)[[1]][3:5]
 				#		if(length(marglikeline)==0){next}
 						marglikes	<-	c(i,marglikeline)
 					
@@ -3119,14 +3123,13 @@ posterior_stats	<-	function(df,parameter){
 ```{r}
 #|	message:	false
 #|	results:	hide
-runDir	<-	"daruanus/migrate/output"
+runDir	<-	"/Users/eric/Library/CloudStorage/OneDrive-ThePennsylvaniaStateUniversity/Research/Daruanus/migrate/run2"
 
 likelist	<-	list()
-for(r	in	1:10){
+for(r	in	1:5){
 		rep	=	paste0("rep",r)
 		print(rep)
-		likelist[[rep]]	<-	harvest.model.likelihoods(workingDir=
-																																																	file.path(runDir,rep))
+		likelist[[rep]]	<-	harvest.model.likelihoods(workingDir=																																													file.path(runDir,rep))
 }
 
 #	Model	selection	for	each	replicate...
