@@ -1,0 +1,279 @@
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ +                                                                +
+ +   POPULATION SIZE, MIGRATION, DIVERGENCE, ASSIGNMENT, HISTORY  +
+ +   Bayesian inference using the structured coalescent           +
+ +                                                                +
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  Compiled for a PARALLEL COMPUTER ARCHITECTURE
+  One master and 119 compute nodes are available.
+  PDF output enabled [Letter-size]
+  Version 4.4.4(git:)   [June-1-2019]
+  Program started at   Mon Mar 13 10:39:03 2023
+
+
+
+
+Reading (1) PNG ...
+Reading (2) NC ...
+Reading (3) Fiji ...
+Reading (4) Societies ...
+Reading (5) Tuamotus ...
+Options in use:
+---------------
+
+Analysis strategy is BAYESIAN INFERENCE
+    - Population size estimation: Theta [Exponential Distribution]
+    - Geneflow estimation: Migration [Exponential Distribution]
+    - Divergence estimation: Divergence time [Normal Distribution [Shortcut] with mean and]
+                                             [and standard deviation sigma     ]
+
+Proposal distribution:
+Parameter group          Proposal type
+-----------------------  -------------------
+Population size (Theta)  Metropolis sampling
+Migration rate    (xNm)  Metropolis sampling
+Divergence Time (D)  Metropolis sampling
+Divergence time spread (STD) Metropolis sampling
+Genealogy                Metropolis-Hastings
+
+
+Prior distribution (Proposal-delta will be tuned to acceptance frequence 0.440000):
+Parameter group            Prior type   Minimum    Mean(*)    Maximum    Delta      Bins   Updatefreq
+-------------------------  ------------ ---------- ---------- ---------- ---------- ------ -------
+Population size (Theta_1)   Exp window  0.000000   0.100000  100.000000  1.000000    2000  0.03846
+Population size (Theta_2)   Exp window  0.000000   0.100000  100.000000  1.000000    2000  0.03846
+Population size (Theta_3)   Exp window  0.000000   0.100000  100.000000  1.000000    2000  0.03846
+Population size (Theta_4)   Exp window  0.000000   0.100000  100.000000  1.000000    2000  0.03846
+Population size (Theta_5)   Exp window  0.000000   0.100000  100.000000  1.000000    2000  0.03846
+Ancestor 2 to 1 (D_time)   Exp window  0.000000   0.010000   1.000000   0.010000    1500  0.03846
+Ancestor 2 to 1 (S_time)   Exp window  0.000000   0.010000   1.000000   0.010000    1500  0.03846
+Ancestor 3 to 2 (D_time)   Exp window  0.000000   0.010000   1.000000   0.010000    1500  0.03846
+Ancestor 3 to 2 (S_time)   Exp window  0.000000   0.010000   1.000000   0.010000    1500  0.03846
+Ancestor 4 to 3 (D_time)   Exp window  0.000000   0.010000   1.000000   0.010000    1500  0.03846
+Ancestor 4 to 3 (S_time)   Exp window  0.000000   0.010000   1.000000   0.010000    1500  0.03846
+Ancestor 5 to 4 (D_time)   Exp window  0.000000   0.010000   1.000000   0.010000    1500  0.03846
+Ancestor 5 to 4 (S_time)   Exp window  0.000000   0.010000   1.000000   0.010000    1500  0.03846
+
+
+
+Datatype: Microsatellite data [Brownian motion]
+Missing data is not included
+
+Inheritance scalers in use for Thetas (specified scalars=1)
+1.00 1.00 1.00 1.00 1.00 
+1.00 1.00 1.00 
+[Each Theta uses the (true) inheritance scalar of the first locus as a reference]
+
+
+Pseudo-random number generator: Mersenne-Twister                                
+Random number seed (with internal timer)           4070181417
+
+Start parameters:
+   First genealogy was started using a random tree
+   Start parameter values were generated
+Connection matrix:
+m = average (average over a group of Thetas or M,
+s = symmetric migration M, S = symmetric 4Nm,
+0 = zero, and not estimated,
+* = migration free to vary, Thetas are on diagonal
+d = row population split off column population
+D = split and then migration
+   1 PNG            * d 0 0 0 
+   2 NC             0 * d 0 0 
+   3 Fiji           0 0 * d 0 
+   4 Societies      0 0 0 * d 
+   5 Tuamotus       0 0 0 0 * 
+
+
+
+Mutation rate is constant for all loci
+
+Markov chain settings:
+   Long chains (long-chains):                              1
+      Steps sampled (inc*samples*rep):               1050000
+      Steps recorded (sample*rep):                     10500
+   Combining over replicates:                              3
+   Static heating scheme
+      4 chains with  temperatures
+       1.00, 1.50, 3.00,1000000.00
+      Swapping interval is 1
+   Burn-in per replicate (samples*inc):               500000
+
+Print options:
+   Data file:                  ../../Daruanus_All_8locus.mig
+   Haplotyping is turned on:                              NO
+   Output file (ASCII text):                     outfile.txt
+   Output file (PDF):                            outfile.pdf
+   Posterior distribution:                         bayesfile
+   All values of Post.Dist:                     bayesallfile
+   Print data:                                            No
+   Print genealogies:                                     No
+
+Empirical Base Frequencies
+------------------------------------------------------------
+Locus     Sublocus  Nucleotide                        Model parameters/
+                    ------------------------------ 
+                    A       C       G       T(U)
+----------------------------------------------------------------------
+
+Locus Sublocus Region type     Rate of change    Probability  Patch size
+--------------------------------------------------------------------------
+   7       1        1           1.000            1.000            1.000
+
+
+Empirical Base Frequencies
+------------------------------------------------------------
+Locus     Sublocus  Nucleotide                        Model parameters/
+                    ------------------------------ 
+                    A       C       G       T(U)
+----------------------------------------------------------------------
+
+Locus Sublocus Region type     Rate of change    Probability  Patch size
+--------------------------------------------------------------------------
+   8       1        1           1.000            1.000            1.000
+
+
+Empirical Base Frequencies
+------------------------------------------------------------
+Locus     Sublocus  Nucleotide                        Model parameters/
+                    ------------------------------ 
+                    A       C       G       T(U)
+----------------------------------------------------------------------
+
+Locus Sublocus Region type     Rate of change    Probability  Patch size
+--------------------------------------------------------------------------
+   1       1        1           1.000            1.000            1.000
+
+
+Empirical 
+Empirical Base Frequencies
+Base Frequencies
+------------------------------------------------------------
+------------------------------------------------------------
+Locus     Sublocus  Nucleotide                        Model parameters/
+Locus     Sublocus  Nucleotide                        Model parameters/
+                    ------------------------------ 
+                    A       C       G       T(U)
+----------------------------------------------------------------------
+
+Locus Sublocus Region type     Rate of change    Probability  Patch size
+                    ------------------------------ 
+--------------------------------------------------------------------------
+                    A       C       G       T(U)
+   6       1        1           1.000            1.000            1.000
+----------------------------------------------------------------------
+
+
+Locus Sublocus Region type     Rate of change    Probability  Patch size
+--------------------------------------------------------------------------
+   5       1        1           1.000            1.000            1.000
+
+
+Empirical Base Frequencies
+------------------------------------------------------------
+Locus     Sublocus  Nucleotide                        Model parameters/
+                    ------------------------------ 
+                    A       C       G       T(U)
+----------------------------------------------------------------------
+
+Locus Sublocus Region type     Rate of change    Probability  Patch size
+--------------------------------------------------------------------------
+   3       1        1           1.000            1.000            1.000
+
+
+Empirical Base Frequencies
+------------------------------------------------------------
+Locus     Sublocus  Nucleotide                        Model parameters/
+                    ------------------------------ 
+                    A       C       G       T(U)
+----------------------------------------------------------------------
+
+Locus Sublocus Region type     Rate of change    Probability  Patch size
+--------------------------------------------------------------------------
+   4       1        1           1.000            1.000            1.000
+
+
+Empirical Base Frequencies
+------------------------------------------------------------
+Locus     Sublocus  Nucleotide                        Model parameters/
+                    ------------------------------ 
+                    A       C       G       T(U)
+----------------------------------------------------------------------
+
+Locus Sublocus Region type     Rate of change    Probability  Patch size
+--------------------------------------------------------------------------
+   2       1        1           1.000            1.000            1.000
+
+[  4] 10:39:12   Burn-in of 500000 steps (Locus: 4/8, Replicate: 1/3) 
+[  1] 10:39:12   Burn-in of 500000 steps (Locus: 1/8, Replicate: 1/3) 
+[  6] 10:39:12   Burn-in of 500000 steps (Locus: 6/8, Replicate: 1/3) 
+[  7] 10:39:12   Burn-in of 500000 steps (Locus: 7/8, Replicate: 1/3) 
+[  8] 10:39:12   Burn-in of 500000 steps (Locus: 8/8, Replicate: 1/3) 
+[  2] 10:39:12   Burn-in of 500000 steps (Locus: 2/8, Replicate: 1/3) 
+[  5] 10:39:12   Burn-in of 500000 steps (Locus: 5/8, Replicate: 1/3) 
+[  3] 10:39:12   Burn-in of 500000 steps (Locus: 3/8, Replicate: 1/3) 
+[ 67] 10:39:34   Burn-in of 500000 steps (Locus: 1/8, Replicate: 3/3) 
+[ 76] 10:39:35   Burn-in of 500000 steps (Locus: 5/8, Replicate: 2/3) 
+[ 49] 10:39:35   Burn-in of 500000 steps (Locus: 6/8, Replicate: 3/3) 
+[114] 10:39:35   Burn-in of 500000 steps (Locus: 6/8, Replicate: 2/3) 
+[ 17] 10:39:35   Burn-in of 500000 steps (Locus: 4/8, Replicate: 2/3) 
+[ 84] 10:39:35   Burn-in of 500000 steps (Locus: 4/8, Replicate: 3/3) 
+[108] 10:39:35   Burn-in of 500000 steps (Locus: 7/8, Replicate: 2/3) 
+[ 30] 10:39:35   Burn-in of 500000 steps (Locus: 3/8, Replicate: 2/3) 
+[ 61] 10:39:35   Burn-in of 500000 steps (Locus: 5/8, Replicate: 3/3) 
+[116] 10:39:36   Burn-in of 500000 steps (Locus: 3/8, Replicate: 3/3) 
+[ 25] 10:39:36   Burn-in of 500000 steps (Locus: 8/8, Replicate: 3/3) 
+[ 22] 10:39:36   Burn-in of 500000 steps (Locus: 7/8, Replicate: 3/3) 
+[119] 10:39:36   Burn-in of 500000 steps (Locus: 1/8, Replicate: 2/3) 
+[110] 10:39:37   Burn-in of 500000 steps (Locus: 8/8, Replicate: 2/3) 
+[ 48] 10:39:37   Burn-in of 500000 steps (Locus: 2/8, Replicate: 3/3) 
+[ 78] 10:39:38   Burn-in of 500000 steps (Locus: 2/8, Replicate: 2/3) 
+[114] 18:02:40   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.16,0.16,0.16,0.97) Swap(3,103,0)
+                Param={ 0.7011 1.11 1.04 0.9531 1.003 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.009053 0.00547 0.01056 0.006599 0.009961 0.006416 0.007268 0.003788}
+[116] 18:03:24   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.04,0.04,0.04,0.87) Swap(242,16,0)
+                Param={ 1.246 1.092 1.125 1.002 1.127 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.006647 0.006871 0.007131 0.005011 0.007203 0.004386 0.006814 0.007315}
+[ 22] 18:05:24   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.04,0.04,0.04,0.83) Swap(234,1,0)
+                Param={ 1.112 1.336 1.127 1.086 1.043 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.009838 0.006702 0.008481 0.006166 0.006699 0.006694 0.0009954 0.01299}
+[ 25] 18:06:03   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.05,0.05,0.06,0.90) Swap(33,41,0)
+                Param={ 0.978 1.044 0.9485 1.251 1.163 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01994 0.01139 0.007705 0.005242 0.008362 0.009056 0.007242 0.005722}
+[  1] 18:07:18   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.18,0.18,0.18,0.95) Swap(451,2,0)
+                Param={ 0.7182 1.196 1.621 1.034 1.142 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.007582 0.004373 0.008812 0.004334 0.01023 0.008327 0.01027 0.005798}
+[ 67] 18:08:33   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.18,0.18,0.18,0.95) Swap(2,0,0)
+                Param={ 1.263 1.081 0.9841 1.015 0.9295 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.003614 0.01685 0.006516 0.003632 0.00706 0.006664 0.007909 0.004774}
+[  2] 18:08:37   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.27,0.27,0.27,0.99) Swap(1872,1,0)
+                Param={ 1.077 0.9416 1.344 1.161 0.8815 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01357 0.006877 0.008828 0.003842 0.009735 0.003986 0.009985 0.004845}
+[ 17] 18:08:46   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.09,0.09,0.10,0.92) Swap(1,0,0)
+                Param={ 0.9242 1.224 1.169 0.873 1.082 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01726 0.0104 0.008015 0.005137 0.007462 0.005201 0.01049 0.006521}
+[ 61] 18:08:54   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.16,0.15,0.16,0.96) Swap(505,830,0)
+                Param={ 1.059 1.056 1.126 1.101 0.9548 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01439 0.005063 0.008933 0.008194 0.01001 0.004912 0.008387 0.005138}
+[ 49] 18:09:08   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.16,0.16,0.16,0.96) Swap(1,1,0)
+                Param={ 0.8257 1.005 1.032 1.032 0.9393 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01774 0.01404 0.008526 0.004748 0.009509 0.004793 0.005412 0.01091}
+[ 30] 18:09:55   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.04,0.04,0.04,0.87) Swap(19,1,0)
+                Param={ 1.088 0.9978 0.9894 1.041 0.9349 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01197 0.005688 0.006605 0.004031 0.007707 0.004448 0.005715 0.006859}
+[ 48] 18:10:30   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.27,0.27,0.27,0.99) Swap(1,1,0)
+                Param={ 0.9426 1.037 1.093 1.255 1.012 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01005 0.004371 0.00833 0.004714 0.01321 0.00592 0.01188 0.005874}
+[ 84] 18:10:37   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.09,0.09,0.09,0.92) Swap(2,56,0)
+                Param={ 0.9525 1.51 1.08 1.111 0.9961 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.006668 0.01415 0.009961 0.007361 0.007267 0.003702 0.007863 0.005481}
+[ 78] 18:10:53   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.27,0.27,0.27,0.99) Swap(21,1427,0)
+                Param={ 0.9342 1.177 1.139 1.06 1.212 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01082 0.01219 0.01074 0.004103 0.007818 0.00324 0.0165 0.01645}
+[110] 18:11:30   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.05,0.05,0.06,0.90) Swap(23,0,0)
+                Param={ 0.865 0.8912 1.484 1.105 0.9857 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0155 0.007811 0.006035 0.008371 0.007935 0.00467 0.006986 0.004102}
+[ 76] 18:13:30   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.16,0.16,0.16,0.96) Swap(388,1,0)
+                Param={ 0.874 1.394 1.307 1.123 1.032 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01356 0.01229 0.007907 0.003954 0.00961 0.006778 0.01047 0.007163}
+[  4] 18:13:35   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.09,0.09,0.09,0.92) Swap(32,14,0)
+                Param={ 0.9738 0.9853 1.083 1.09 0.9811 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.007133 0.004709 0.006557 0.004271 0.006676 0.004912 0.008023 0.005214}
+[119] 18:14:26   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.18,0.19,0.18,0.95) Swap(267,4,0)
+                Param={ 1.096 1.199 1.155 0.9182 0.9606 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01078 0.004682 0.006741 0.003888 0.008367 0.005894 0.008041 0.004953}
+[  6] 18:16:15   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.16,0.16,0.16,0.96) Swap(159,146,0)
+                Param={ 0.9495 0.919 0.9215 0.9362 1.228 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01055 0.01333 0.008116 0.004109 0.0091 0.005172 0.01041 0.005848}
+[108] 18:16:44   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.04,0.04,0.04,0.84) Swap(1,1,0)
+                Param={ 1.094 1.024 1.197 1.033 1.053 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.008542 0.004977 0.007467 0.006018 0.007703 0.005009 0.008226 0.005149}
+[  7] 18:16:55   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.04,0.04,0.04,0.84) Swap(57,0,0)
+                Param={ 0.9925 0.9511 1.098 1.054 0.9022 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.009226 0.003816 0.00347 0.008743 0.008212 0.005087 0.006628 0.004558}
+[  8] 18:17:15   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.05,0.05,0.05,0.90) Swap(229,1,0)
+                Param={ 0.865 1.176 1.179 1.054 1.097 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01 0.003885 0.002044 0.01335 0.007731 0.003972 0.006858 0.005712}
+[  3] 18:18:42   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.04,0.04,0.04,0.87) Swap(175,1,0)
+                Param={ 1.055 1.023 0.9941 1.429 0.966 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.00718 0.004183 0.007903 0.004691 0.007129 0.004926 0.006737 0.005203}
+[  5] 18:19:53   Sampling Temp[4]:(1,1.5,3,1e+06) Acc(0.16,0.15,0.16,0.96) Swap(89,38,0)
+                Param={ 0.8707 0.9984 1.203 1.243 1.227 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.01031 0.005095 0.007169 0.004614 0.007486 0.004419 0.007582 0.004191}
+18:20:20   Program finished

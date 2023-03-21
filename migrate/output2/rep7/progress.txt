@@ -1,0 +1,12 @@
+Tue Mar  7 11:25:40 EST 2023
+starting 2way.SS_Equilibrium/ at Tue Mar 7 11:25:40 EST 2023
+starting EtoW_DivMig/ at Tue Mar 7 15:23:37 EST 2023
+starting EtoW_DivOnly/ at Tue Mar 7 23:12:06 EST 2023
+starting EtoW.SS_Equilibrium/ at Wed Mar 8 06:52:46 EST 2023
+starting EtoW_treemix/ at Wed Mar 8 10:50:42 EST 2023
+starting n-Island/ at Wed Mar 8 18:34:52 EST 2023
+starting Panmixia/ at Wed Mar 8 22:43:53 EST 2023
+starting WtoE_DivMig/ at Thu Mar 9 01:46:16 EST 2023
+starting WtoE_DivOnly/ at Thu Mar 9 09:22:25 EST 2023
+starting WtoE.SS_Equilibrium/ at Thu Mar 9 16:50:44 EST 2023
+starting WtoE_treemix/ at Thu Mar 9 20:48:57 EST 2023

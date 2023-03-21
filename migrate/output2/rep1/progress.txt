@@ -1,0 +1,11 @@
+Tue Dec 13 19:32:02 EST 2022
+starting 2way.SS_Equilibrium/ at Tue Dec 13 19:32:02 EST 2022
+starting EtoW_DivMig/ at Tue Dec 13 23:35:56 EST 2022
+starting EtoW_DivOnly/ at Wed Dec 14 07:26:38 EST 2022
+starting EtoW.SS_Equilibrium/ at Wed Dec 14 15:09:48 EST 2022
+starting n-Island/ at Wed Dec 14 18:58:45 EST 2022
+starting Panmixia/ at Wed Dec 14 22:53:48 EST 2022
+starting WtoE_DivMig/ at Thu Dec 15 01:52:34 EST 2022
+starting WtoE_DivOnly/ at Thu Dec 15 09:25:06 EST 2022
+starting WtoE.SS_Equilibrium/ at Thu Dec 15 16:53:23 EST 2022
+starting WtoE_treemix/ at Thu Dec 15 20:33:06 EST 2022

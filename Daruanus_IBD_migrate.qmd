@@ -36,6 +36,7 @@ library(forcats)
 library(strataG)
 library(EnvStats)
 library(genepopedit)
+library(perm)
 
 source("IBD_functions.R")
 
@@ -2585,7 +2586,7 @@ This	definitely	improved	things.	Now	all	gene	flow	parameters	are	around	40!	But
 
 ###	Divergence	with	Gene	Flow
 
-Now	I'm	going	to	add	divergence	with	gene	flow	(going	from	West	to	East).	Also	change	the	migration	parameters	to	uniform.
+Now	I'm	going	to	add	divergence	with	gene	flow	(going	from	West	to	East).	Also	change	the	migration	priors	to	uniform.
 
 ```{bash}
 #| eval: false
@@ -2860,7 +2861,7 @@ Copy	it	up	to	Nautilus,	make	10	replicate	folders.
 #| eval: false
 scp	-r	./migrate/Models2	naut:./Daruanus3/rep1
 
-for a in $(seq 2 5); do cp -r rep1 rep$a; done
+for a in $(seq 2 10); do cp -r rep1 rep$a; done
 ```
 
 ####	Bash	Script
@@ -2900,7 +2901,7 @@ for r in */
 ```{bash}
 #| eval: false
 
-rsync	-av	-e	ssh	--exclude='bayes*'	--exclude="*.pdf"	--exclude="*.mig"	ecrandall@nautilus.psu.edu:~/daruanus/	output
+rsync	-av	-e	ssh	--exclude='bayes*'	--exclude="*.pdf"	--exclude="*.mig" ecrandall@nautilus.psu.edu:~/Daruanus3/	output3
 
 rsync	-av	-e	ssh	ecrandall@nautilus.psu.edu:~/daruanus/rep1/EtoW_DivMig	output/rep1/EtoW_DivMig
 ```
@@ -3123,10 +3124,10 @@ posterior_stats	<-	function(df,parameter){
 ```{r}
 #|	message:	false
 #|	results:	hide
-runDir	<-	"/Users/eric/Library/CloudStorage/OneDrive-ThePennsylvaniaStateUniversity/Research/Daruanus/migrate/run2"
+runDir	<-	"./migrate/output2"
 
 likelist	<-	list()
-for(r	in	1:5){
+for(r	in	1:10){
 		rep	=	paste0("rep",r)
 		print(rep)
 		likelist[[rep]]	<-	harvest.model.likelihoods(workingDir=																																													file.path(runDir,rep))
@@ -3135,7 +3136,7 @@ for(r	in	1:5){
 #	Model	selection	for	each	replicate...
 likelist	%>%	map(bfcalcs)
 ```
-The	final	model	marginal	likelihood	estimates	based	on	the	mean	of	10	replicates:
+The	final	model	marginal	likelihood	estimates	based	on	the	mean	of	10	replicates. The best model is West to East divergence with migration as specified by Treemix (a single migration event from Societies to New Caledonia)!
 
 ```{r}
 like.df	<-		likelist	%>%	bind_rows()	%>%	group_by(model)
@@ -3150,7 +3151,7 @@ final_model
 
 #####	T-Test
 
-Difference	between	panmixia	and	the	second-place	full	model	is	very	significant.
+Difference	between	West to East Treemix	and	the	second-place	East to West Treemix	model	is	very	significant.
 
 ```{r}
 top.choice	<-	final_model$model[which(final_model$choice	==1)]
@@ -3543,8 +3544,8 @@ treemix	-i	Daruanus_treemix.txt.gz	-o	Tua_5m	-micro	-root	Tuamotus	-global	-m	5
 There	are	never	more	than	two	edges	added.	One	from	Fiji	to	Societies,	and	the	other	from	New	Caledonia	to	Tuamotus...
 
 ```{r}
-source("Daruanus/treemix/plotting_funcs.R")
-setwd("Daruanus/treemix/5pop_explore")
+source("./treemix/plotting_funcs.R")
+setwd("./treemix/5pop_explore")
 plot_tree("PNG_0m")
 plot_resid("PNG_0m",	"../5poporder.txt")
 plot_tree("PNG_1m")
@@ -3566,7 +3567,7 @@ plot_tree("Tua_3m")
 plot_tree("Tua_4m")
 plot_tree("Tua_4m")
 plot_tree("Tua_5m")
-plot_tree("Tua_6m")
+
 
 ```
 ##	How	many	migration	events?
@@ -3610,7 +3611,7 @@ orientagraph	-i	../Daruanus_treemix.txt.gz	-o	PNG_5m_mlno	-micro	-root	PNG	-glob
 ```
 
 ```{r}
-setwd("orientagraph_5pop/")
+setwd("../orientagraph_5pop/")
 plot_tree("Tua_2m")
 plot_tree("PNG_6m_mlno135")
 plot_resid("PNG_6m_mlno135","../5poporder.txt")
