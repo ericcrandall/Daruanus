@@ -15,6 +15,7 @@ bibliography: "../IBD_Kernels/IBD_Kernels.bib"
 warning: false
 ---
 
+# Setup
 
 ```{r}
 #| label: setup library
@@ -44,6 +45,7 @@ source("IBD_functions.R")
 
 ```
 
+# Introduction
 
 Cecile Fauvelot has kindly shared a giant (n=1358) microsatellite dataset for *Dascyllus aruanus*, the white tailed or humbug damsel. These have been sampled from Papua New Guinea, New Caledonia, Fiji and the Society Islands/Tuamotus. 
 
