@@ -35,11 +35,12 @@ library(graph4lg)
 library(coda)
 library(knitr)
 library(forcats)
-library(strataG)
+#library(strataG)
 library(EnvStats)
 library(genepopedit)
 library(perm)
 library(data.table)
+library(OptM)
 
 source("IBD_functions.R")
 
@@ -134,7 +135,7 @@ locNames(Daruanus.gen)
 Daruanus.gen <- Daruanus.gen[loc=-c(2,5,10)]
 
 #convert to strataG gtypes
-Daruanus.gtypes <- genind2gtypes(Daruanus.gen)
+#Daruanus.gtypes <- genind2gtypes(Daruanus.gen)
 
 #genind_to_genepop(Daruanus.gen, output = "Daruanus/Daruanus_All_8locus.txt")
 ```
