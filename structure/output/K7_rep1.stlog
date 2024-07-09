@@ -1,0 +1,37 @@
+
+
+----------------------------------------------------
+STRUCTURE by Pritchard, Stephens and Donnelly (2000)
+     and Falush, Stephens and Pritchard (2003)
+       Code by Pritchard, Falush and Hubisz
+             Version 2.3.4 (Jul 2012)
+----------------------------------------------------
+
+
+Reading file "/data/home/edc5240/Daruanus/mainparams".
+datafile is
+Daruanus_All_8locus_stru.txt
+Reading file "/data/home/edc5240/Daruanus/extraparams".
+Reading file "/data/home/edc5240/Daruanus/Daruanus_All_8locus_stru.txt".
+
+
+WARNING:  Unexpected end of input file.  The details of the
+input file are set in mainparams.  I ran out of data while reading
+the data for individual 1359.
+
+----------------------------------
+There were errors in the input file (listed above). According to 
+"mainparams" the input file should contain one row of markernames with 8 entries,
+ 5432 rows with 10 entries .
+
+There are 2717 rows of data in the input file, with an average of 10.00
+entries per line.  The following shows the number of entries in each
+line of the input file:
+
+# Entries:   Line numbers
+        8:   1
+       10:   2--2717
+----------------------------------
+
+Exiting the program due to error(s) listed above.
+

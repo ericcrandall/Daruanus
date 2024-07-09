@@ -1,0 +1,20 @@
+Migraine 0.6 (Built on Apr 14 2021 at 21:34:18)
+blackbox, version 1.1.46 loaded
+R code run on  Sat Jul  6 17:05:40 2024
+
+Data file: ../../Daruanus_Fiji.txt
+Settings file: migraine.txt
+
+Geographic bin width= 35.0933
+Demographic model: IBD 1D
+Canonical parameters: 2Nmu 2Nm g
+* N stands for number of gene copies, 
+    i.e. 2N = 4 x [the number of diploid individuals] *
+
+(!) Few points in upper 11.03 [ln(L) units] range:
+	   only 63 points in this range. 
+    Only 100 unique coordinates selected for Kriging.
+
+
+*** Confidence intervals *** 
+

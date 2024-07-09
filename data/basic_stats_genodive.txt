@@ -1,0 +1,68 @@
+
+___________________________________________________________________
+
+GenoDive 3.06, 2024-07-06 18:23:30 +0000
+Genetic Diversity: Nei 1987.
+File: Daruanus_All_8locus.gen
+1358 of 1358 individuals included, 8 of 8 loci included
+
+– Summary of indices of genetic diversity
+
+Statistic	Value	Std.Dev.	c.i.2.5%	c.i.97.5%	Description
+Num	39.500	6.571	28.125	51.750	Number of alleles
+Eff_num	9.076	1.818	5.906	12.465	Effective number of alleles
+Ho	0.856	0.025	0.811	0.901	Observed Heterozygosity
+Hs	0.864	0.029	0.810	0.914	Heterozygosity Within Populations
+Ht	0.884	0.028	0.830	0.932	Total Heterozygosity
+H't	0.885	0.028	0.830	0.933	Corrected total Heterozygosity
+Gis	0.009	0.008	-0.008	0.024	Inbreeding coefficient
+
+Standard deviations of F-statistics were obtained through jackknifing over loci.
+95% confidence intervals of F-statistics were obtained through bootstrapping over loci.
+
+
+– Indices of genetic diversity per locus
+
+Locus	Num	Eff_num	Ho	Hs	Ht	H't	Gis
+304	30.000	4.647	0.772	0.796	0.815	0.816	0.029
+331	14.000	3.567	0.763	0.729	0.742	0.743	-0.046
+589	63.000	14.900	0.933	0.945	0.956	0.956	0.013
+523	34.000	8.628	0.859	0.896	0.929	0.930	0.041
+360	31.000	5.625	0.841	0.833	0.851	0.852	-0.009
+565	27.000	5.414	0.820	0.826	0.867	0.869	0.008
+542	67.000	16.857	0.935	0.953	0.965	0.965	0.019
+590	50.000	12.970	0.929	0.935	0.948	0.948	0.007
+Overall	39.500	9.076	0.856	0.864	0.884	0.885	0.009
+
+
+– Indices of genetic diversity per population
+
+Population	Num	Eff_num	Ho	Hs	Gis
+Go_Go1	24.625	12.557	0.882	0.897	0.017
+Hie_Hie2	22.875	13.664	0.888	0.909	0.022
+Lar_Lar1	24.000	12.235	0.887	0.893	0.007
+Lion_Lion1	22.500	12.403	0.901	0.891	-0.011
+Lolo_Lolo1	9.625	7.303	0.917	0.891	-0.029
+Manu_Manu1	12.625	8.655	0.866	0.897	0.035
+Mara_Mara1	23.875	13.042	0.892	0.904	0.014
+Mata_Mata1	18.125	8.362	0.839	0.831	-0.009
+MBO_MBO1	24.125	13.703	0.885	0.908	0.025
+Mo_Mo31-92	22.625	8.607	0.842	0.842	-0.001
+Muaiv_Muaiv1	19.125	9.273	0.813	0.853	0.047
+Nadi_Nadi1	18.500	8.205	0.811	0.836	0.030
+Puna_Puna1	12.250	7.145	0.825	0.833	0.010
+QBW_QBW1	23.250	12.689	0.886	0.907	0.023
+Rangi_Rangi1	14.875	8.188	0.860	0.846	-0.017
+Suva_Suva1	20.125	9.109	0.857	0.846	-0.013
+Taga_Taga1	18.875	8.475	0.841	0.831	-0.012
+Tahaa_Tahaa1	14.125	7.842	0.833	0.843	0.012
+Taka_Taka1	12.125	6.466	0.841	0.824	-0.021
+Tave_Tave1	17.750	8.368	0.827	0.838	0.012
+Tem_Tem1	17.125	8.039	0.838	0.843	0.006
+Ten_Ten1	23.375	12.419	0.870	0.896	0.029
+Tetia_Tetia1	16.500	7.986	0.803	0.827	0.029
+Tote_Tote1	25.000	13.434	0.899	0.901	0.002
+Yanu_Yanu1	17.000	8.057	0.809	0.822	0.016
+
+
+___________________________________________________________________
