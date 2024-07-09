@@ -2200,12 +2200,10 @@ across.archipelagos.df <- dcast(across.archipelagos,Archipelago~Estimate)
 errors <- enframe(c(Fiji_NS = sigma_error_fromNS_Fiji,
                     Fiji_Slope = sigma_error_fromSlope_Fiji,
                     FP_NS = sigma_error_fromNS_FP, 
-                    FP_NS_all = sigma_error_fromNS_all_FP,
-                    FP_Slope = sigma_error_fromSlope_FP,
-                    FP_Slope_all = sigma_error_fromSlope_all_FP),
-                  name = "Archipelago", 
-                  value = "Sigma") %>% 
-                mutate(Archipelago = str_remove(Archipelago, pattern="\\d+$"))
+                    FP_Slope = sigma_error_fromSlope_FP),
+                    name = "Archipelago", 
+                    value = "Sigma") %>% 
+                    mutate(Archipelago = str_remove(Archipelago, pattern="\\d+$"))
 
 violins <- ggplot(errors, aes(x = Archipelago, y = Sigma)) + geom_violin() + 
   coord_cartesian(ylim = c(5, 1000)) + 
@@ -2220,7 +2218,7 @@ boxes <- ggplot(errors, aes(x = Archipelago, y = Sigma)) + geom_boxplot() +
   scale_y_log10()
 
 
-          
+ggsave("figures/violins.pdf", plot=violins,device="pdf", width=7, height=5,units="in")
 ```
 
 ## Make figures for the proposal
